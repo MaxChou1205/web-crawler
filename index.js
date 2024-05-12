@@ -8,27 +8,33 @@ const pageParser = require("./pageParser");
   const page = await browser.newPage();
   await page.setRequestInterception(true);
   page.on("request", request => {
+
     if (
-      ["image", "stylesheet", "font", "script"].indexOf(
-        request.resourceType()
-      ) !== -1
+      ["stylesheet", "font", "script"].indexOf(request.resourceType()) !== -1
     ) {
       request.abort();
+    } else if (request.resourceType() === "image") {
+      const url = request.url();
+      if (url.includes("v1/image")) {
+        request.continue();
+      } else {
+        request.abort();
+      }
     } else {
       request.continue();
     }
   });
 
-  const baseUrl =
-    "https://buy.yungching.com.tw/region/%E6%96%B0%E5%8C%97%E5%B8%82-%E6%96%B0%E5%BA%97%E5%8D%80_c/800-1200_price/?od=80";
+  const baseUrl = "https://buy.yungching.com.tw";
+  const searchUrl = `${baseUrl}/region/%E6%96%B0%E5%8C%97%E5%B8%82-%E6%96%B0%E5%BA%97%E5%8D%80_c/800-1200_price/?od=80`;
   let currentPage = 1;
-  const totalPages = 5; // 假設總共有 5 頁
+  const totalPages = 3; // 假設總共有 5 頁
 
   const data = [];
 
   while (currentPage <= totalPages) {
-    const url = `${baseUrl}&pg=${currentPage}`;
-    await page.goto('https://buy.yungching.com.tw/region/%E6%96%B0%E5%8C%97%E5%B8%82-%E6%96%B0%E5%BA%97%E5%8D%80_c', {
+    const url = `${searchUrl}&pg=${currentPage}`;
+    await page.goto(url, {
       waitUntil: "domcontentloaded",
       timeout: 0
     });
@@ -36,7 +42,7 @@ const pageParser = require("./pageParser");
     await page.waitForSelector(".l-item-list");
 
     // 取得元素內容
-    const pageData = await page.evaluate(async () => {
+    const pageData = await page.evaluate(baseUrl => {
       const elements = Array.from(
         document.querySelectorAll(".l-item-list .m-list-item")
       );
@@ -56,7 +62,9 @@ const pageParser = require("./pageParser");
           image: element
             .querySelector("figure.img-wrap img")
             .getAttribute("src"),
-          link: element.querySelector("a.item-title").getAttribute("href"),
+          link: `${baseUrl}${element
+            .querySelector("a.item-title")
+            .getAttribute("href")}`,
           title: getText(element, "a.item-title h3"),
           location: getText(element, ".item-description span:first-child"),
           description: getText(element, ".item-description span:last-child"),
@@ -71,13 +79,14 @@ const pageParser = require("./pageParser");
       });
 
       return items;
-    });
+    }, baseUrl);
 
     data.push(...pageData);
     currentPage++;
   }
 
   console.log(data);
+  fs.writeFileSync("data.json", JSON.stringify(data));
 
   await browser.close();
 })();
