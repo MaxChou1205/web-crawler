@@ -1,39 +1,42 @@
-function pageInfo() {
-  function getPrev() {
-    let prevLink = "";
-    document.querySelectorAll(".btn,.wide").forEach(button => {
-      if (button.innerText.includes("上頁")) prevLink = button.href;
+export function pageParser(baseUrl) {
+  const getText = (element, selector) => {
+    const selectedElement = element.querySelector(selector);
+    return selectedElement ? selectedElement.innerText.trim() : "";
+  };
+  const parser = () => {
+    const elements = Array.from(
+      document.querySelectorAll(".l-item-list .m-list-item")
+    );
+
+    // 取得所有項目的資訊
+    const items = elements.map(element => {
+      // const imageElement = element.querySelector('figure.img-wrap img');
+      // const imageSrc = await page.evaluate((img) => img.getAttribute('src'), imageElement);
+
+      return {
+        image: `https:${element
+          .querySelector("figure.img-wrap img")
+          .getAttribute("src")}`,
+        link: `${baseUrl}${element
+          .querySelector("a.item-title")
+          .getAttribute("href")}`,
+        title: getText(element, "a.item-title h3"),
+        location: getText(element, ".item-description span:first-child"),
+        description: getText(element, ".item-description span:last-child"),
+        details: Array.from(
+          element.querySelectorAll(".item-info-detail li")
+        ).map(li => li.innerText.trim()),
+        tags: Array.from(element.querySelectorAll(".item-tags span")).map(
+          span => span.innerText.trim()
+        ),
+        price: getText(element, ".item-price .price-num")
+      };
     });
-    return prevLink;
-  }
-  function getPageNumber() {
-    let prev = getPrev();
-    if (prev === "") return 1;
-    //console.log(prev);
-    if (!/index(\d*)\.html/.test(prev)) return "error";
-    let prevPageNumber = /index(\d*)\.html/.exec(prev)[1];
-    return Number(prevPageNumber) + 1;
-  }
-  function linkParser() {
-    let link = [];
-    document.querySelectorAll(".title>a").forEach(a => {
-      if (a.innerText.includes("公告")) return;
-      link.push({
-        title: a.innerText,
-        link: a.href
-      });
-    });
-    return link;
-  }
-  function test() {
-    let items = document.querySelectorAll(".m-list-item");
+
     return items;
-  }
+  };
+
   return {
-    prevPage: getPrev(),
-    pageNumber: getPageNumber(),
-    links: linkParser(),
-    test: test()
+    data: parser()
   };
 }
-module.exports = pageInfo;
