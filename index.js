@@ -1,6 +1,8 @@
 import fs from "fs";
 import puppeteer from "puppeteer";
 import { pageParser } from "./pageParser.js";
+import * as line from "@line/bot-sdk";
+import { flexTemplate } from "./flexTemplate.js";
 
 const dataSource = JSON.parse(fs.readFileSync("data.json"));
 (async () => {
@@ -25,11 +27,12 @@ const dataSource = JSON.parse(fs.readFileSync("data.json"));
     }
   });
 
+  const newData = [];
   const baseUrl = "https://buy.yungching.com.tw";
   const regionList = ["新北市-新店區_c", "台北市-文山區_c"];
-  const newData = [];
+
   for (let region of regionList) {
-    const searchUrl = `${baseUrl}/region/${encodeURIComponent(
+    const searchUrl = `${baseUrl}/region/住宅_p/${encodeURIComponent(
       region
     )}/800-1800_price/?od=80`;
     let currentPage = 1;
@@ -54,9 +57,24 @@ const dataSource = JSON.parse(fs.readFileSync("data.json"));
     }
   }
 
-  console.log(newData);
   dataSource.push(...newData);
   fs.writeFileSync("data.json", JSON.stringify(dataSource));
 
   await browser.close();
+
+  if (newData.length === 0) {
+    console.log("No new data");
+    process.exit(1);
+  }
+
+  const MessagingApiClient = line.messagingApi.MessagingApiClient;
+  const client = new MessagingApiClient({
+    channelAccessToken: ""
+  });
+
+  const flexMessage = flexTemplate(newData);
+  client.pushMessage({
+    to: "Uea01d16a19509c86910fad8ccf5e1803",
+    messages: [flexMessage]
+  });
 })();
