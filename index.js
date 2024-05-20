@@ -4,20 +4,20 @@ import puppeteer from "puppeteer";
 import { pageParser } from "./pageParser.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
-import cron from "node-cron";
-import express from 'express';
+// import cron from "node-cron";
+// import express from 'express';
 
-cron.schedule(
-  // execute every one hour
-  "0 * * * *",
-  () => {
-    console.log("running a task every hour");
-    fetchData();
-  },
-  { runOnInit: true }
-);
+// cron.schedule(
+//   // execute every one hour
+//   "0 * * * *",
+//   () => {
+//     console.log("running a task every hour");
+//     fetchData();
+//   },
+//   { runOnInit: true }
+// );
 
-const fetchData = async () => {
+(async () => {
   const dataSource = JSON.parse(fs.readFileSync("data.json"));
 
   const browser = await puppeteer.launch({ headless: true });
@@ -79,23 +79,14 @@ const fetchData = async () => {
   if (newData.length === 0) {
     console.log("No new data");
   } else {
-    sendLineMessage();
+    const MessagingApiClient = line.messagingApi.MessagingApiClient;
+    const client = new MessagingApiClient({
+      channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
+    });
+    const flexMessage = flexTemplate(newData);
+    client.pushMessage({
+      to: process.env.USER_ID,
+      messages: [flexMessage]
+    });
   }
-};
-
-const sendLineMessage = () => {
-  const MessagingApiClient = line.messagingApi.MessagingApiClient;
-  const client = new MessagingApiClient({
-    channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
-  });
-  const flexMessage = flexTemplate();
-  client.pushMessage({
-    to: process.env.USER_ID,
-    messages: [flexMessage]
-  });
-};
-
-const app = express();
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
-});
+})();

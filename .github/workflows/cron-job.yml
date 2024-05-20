@@ -9,5 +9,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Call Vercel API
-        run: curl -X GET https://web-crawler-sigma.vercel.app/yungching.js
+      # - name: Call Vercel API
+      #   run: node index.js
+      - name: 檢出代碼
+        uses: actions/checkout@v2
+
+      - name: 安裝 Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'  # 指定要安裝的 Node.js 版本
+
+      - name: 執行腳本
+        run: node index.js  # 替換成你的 Node.js 腳本文件名
