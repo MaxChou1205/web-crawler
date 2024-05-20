@@ -11,4 +11,4 @@ jobs:
 
     steps:
       - name: Call Vercel API
-        run: curl -X GET https://web-crawler.vercel.app/cron-job
+        run: curl -X GET https://web-crawler-sigma.vercel.app/cron-job.js
