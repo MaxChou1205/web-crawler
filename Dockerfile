@@ -8,7 +8,6 @@ WORKDIR /usr/src/app
 USER root
 
 COPY package*.json ./
-RUN chmod 644 ./data.json
 RUN npm install
 COPY . .
 CMD ["node", "index.js"]

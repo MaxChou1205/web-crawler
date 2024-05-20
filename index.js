@@ -22,6 +22,14 @@ const fetchData = async () => {
 
   const browser = await puppeteer.launch({
     headless: true,
+    // ignoreDefaultArgs: ["--disable-extensions"],
+    args: [
+      "--disable-setuid-sandbox",
+      "--no-sandbox",
+      "single-process",
+      "--use-gl=egl",
+      "--no-zygote"
+    ],
     executablePath:
       process.env.NODE_ENV === "production"
         ? process.env.PUPPETEER_EXECUTABLE_PATH
