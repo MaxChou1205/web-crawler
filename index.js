@@ -4,20 +4,19 @@ import puppeteer from "puppeteer";
 import { pageParser } from "./pageParser.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
-// import cron from "node-cron";
-// import express from 'express';
+import cron from "node-cron";
 
-// cron.schedule(
-//   // execute every one hour
-//   "0 * * * *",
-//   () => {
-//     console.log("running a task every hour");
-//     fetchData();
-//   },
-//   { runOnInit: true }
-// );
+cron.schedule(
+  // execute every one hour
+  "* * * * *",
+  () => {
+    console.log("running a task every hour");
+    // fetchData();
+  },
+  { runOnInit: true }
+);
 
-(async () => {
+const fetchData = async () => {
   const dataSource = JSON.parse(fs.readFileSync("data.json"));
 
   const browser = await puppeteer.launch({ headless: true });
@@ -89,4 +88,4 @@ import { flexTemplate } from "./flexTemplate.js";
       messages: [flexMessage]
     });
   }
-})();
+};
