@@ -11,6 +11,5 @@ jobs:
     steps:
       # - name: Call Vercel API
       #   run: node index.js
-      - uses: actions/checkout@v2
       - name: execute
-        uses: MaxChou1205/web-crawler@master
+        run: echo "hello"
