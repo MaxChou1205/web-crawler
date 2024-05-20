@@ -5,7 +5,8 @@ import { pageParser } from "./pageParser.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
 
-(async () => {
+export default async function handler(req, res) {
+  console.log('Cron job executed');
   const dataSource = JSON.parse(fs.readFileSync("data.json"));
 
   const browser = await puppeteer.launch({ headless: true });
@@ -69,7 +70,8 @@ import { flexTemplate } from "./flexTemplate.js";
   } else {
     sendLineMessage();
   }
-})();
+  res.status(200).json({ message: 'Cron job executed successfully' });
+}
 
 const sendLineMessage = () => {
   const MessagingApiClient = line.messagingApi.MessagingApiClient;
