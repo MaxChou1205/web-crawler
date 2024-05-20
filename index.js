@@ -5,6 +5,7 @@ import { pageParser } from "./pageParser.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
 import cron from "node-cron";
+import express from "express";
 
 cron.schedule(
   // execute every one hour
@@ -19,7 +20,13 @@ cron.schedule(
 const fetchData = async () => {
   const dataSource = JSON.parse(fs.readFileSync("data.json"));
 
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({
+    headless: true,
+    executablePath:
+      process.env.NODE_ENV === "production"
+        ? process.env.PUPPETEER_EXECUTABLE_PATH
+        : puppeteer.executablePath()
+  });
   //如果為false則會開啟瀏覽器，適合用作於debug時。
   const page = await browser.newPage();
   await page.setRequestInterception(true);
@@ -89,3 +96,6 @@ const fetchData = async () => {
     });
   }
 };
+
+const app = express();
+app.listen(3000);
