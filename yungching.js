@@ -4,10 +4,12 @@ import puppeteer from "puppeteer";
 import { pageParser } from "./pageParser.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
+import path from "path";
 
 export default async function handler(req, res) {
-  console.log('Cron job executed');
-  const dataSource = JSON.parse(fs.readFileSync("data.json"));
+  console.log("Cron job executed");
+  const filePath = path.join(process.cwd(), '"data.json');
+  const dataSource = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
   const browser = await puppeteer.launch({ headless: true });
   //如果為false則會開啟瀏覽器，適合用作於debug時。
@@ -70,7 +72,7 @@ export default async function handler(req, res) {
   } else {
     sendLineMessage();
   }
-  res.status(200).json({ message: 'Cron job executed successfully' });
+  res.status(200).json({ message: "Cron job executed successfully" });
 }
 
 const sendLineMessage = () => {
