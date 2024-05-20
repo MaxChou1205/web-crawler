@@ -9,5 +9,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Call Vercel API
-        run: curl -X GET https://web-crawler-sandy.vercel.app/yungching
+    - name: Call Vercel API
+      run: curl -X GET https://web-crawler-sandy.vercel.app/yungching
