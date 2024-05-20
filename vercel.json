@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "cron-job.js",
+      "src": "yungching.js",
       "use": "@vercel/node"
     }
   ]
