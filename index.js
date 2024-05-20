@@ -18,7 +18,7 @@ cron.schedule(
 );
 
 const fetchData = async () => {
-  const dataSource = JSON.parse(fs.readFileSync("data.json"));
+  const dataSource = JSON.parse(fs.readFileSync("./data.json"));
 
   const browser = await puppeteer.launch({
     headless: true,

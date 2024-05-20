@@ -10,4 +10,6 @@ USER root
 COPY package*.json ./
 RUN npm install
 COPY . .
+COPY data.json /usr/src/app/data.json
+RUN chmod 644 /usr/src/app/data.json
 CMD ["node", "index.js"]
