@@ -5,6 +5,7 @@ import { pageParser } from "./pageParser.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
 import cron from "node-cron";
+import express from 'express';
 
 cron.schedule(
   // execute every one hour
@@ -93,3 +94,8 @@ const sendLineMessage = () => {
     messages: [flexMessage]
   });
 };
+
+const app = express();
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
