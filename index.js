@@ -11,7 +11,7 @@ cron.schedule(
   "* * * * *",
   () => {
     console.log("running a task every hour");
-    // fetchData();
+    fetchData();
   },
   { runOnInit: true }
 );
