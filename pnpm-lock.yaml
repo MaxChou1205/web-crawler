@@ -11,6 +11,12 @@ importers:
       '@line/bot-sdk':
         specifier: ^9.2.2
         version: 9.2.2
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.5
+      node-cron:
+        specifier: ^3.0.3
+        version: 3.0.3
       puppeteer:
         specifier: ^22.8.0
         version: 22.8.0
@@ -174,6 +180,10 @@ packages:
   devtools-protocol@0.0.1273771:
     resolution: {integrity: sha512-QDbb27xcTVReQQW/GHJsdQqGKwYBE7re7gxehj467kKP2DKuYBUj6i2k5LRiAC66J1yZG/9gsxooz/s9pcm0Og==}
 
+  dotenv@16.4.5:
+    resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
+    engines: {node: '>=12'}
+
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -331,6 +341,10 @@ packages:
     resolution: {integrity: sha512-dBpDMdxv9Irdq66304OLfEmQ9tbNRFnFTuZiLo+bD+r332bBmMJ8GBLXklIXXgxd3+v9+KUnZaUR5PJMa75Gsg==}
     engines: {node: '>= 0.4.0'}
 
+  node-cron@3.0.3:
+    resolution: {integrity: sha512-dOal67//nohNgYWb+nWmg5dkFdIwDm8EpeGYMekPMrngV3637lqnX0lbUcCtgibHTz6SEz7DAIjKvKDFYCnO1A==}
+    engines: {node: '>=6.0.0'}
+
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
 
@@ -453,6 +467,10 @@ packages:
 
   urlpattern-polyfill@10.0.0:
     resolution: {integrity: sha512-H/A06tKD7sS1O1X2SshBVeA5FLycRpjqiBeqGKmBwBDBy28EnRjORxTNe269KSSr5un5qyWi1iL61wLxpd+ZOg==}
+
+  uuid@8.3.2:
+    resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    hasBin: true
 
   wrap-ansi@7.0.0:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
@@ -674,6 +692,8 @@ snapshots:
 
   devtools-protocol@0.0.1273771: {}
 
+  dotenv@16.4.5: {}
+
   emoji-regex@8.0.0: {}
 
   end-of-stream@1.4.4:
@@ -822,6 +842,10 @@ snapshots:
   ms@2.1.2: {}
 
   netmask@2.0.2: {}
+
+  node-cron@3.0.3:
+    dependencies:
+      uuid: 8.3.2
 
   once@1.4.0:
     dependencies:
@@ -985,6 +1009,8 @@ snapshots:
   universalify@2.0.1: {}
 
   urlpattern-polyfill@10.0.0: {}
+
+  uuid@8.3.2: {}
 
   wrap-ansi@7.0.0:
     dependencies:

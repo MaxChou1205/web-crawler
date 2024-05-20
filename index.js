@@ -1,11 +1,24 @@
+import "dotenv/config";
 import fs from "fs";
 import puppeteer from "puppeteer";
 import { pageParser } from "./pageParser.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
+import cron from "node-cron";
 
-const dataSource = JSON.parse(fs.readFileSync("data.json"));
-(async () => {
+cron.schedule(
+  // execute every one hour
+  "0 * * * *",
+  () => {
+    console.log("running a task every hour");
+    fetchData();
+  },
+  { runOnInit: true }
+);
+
+const fetchData = async () => {
+  const dataSource = JSON.parse(fs.readFileSync("data.json"));
+
   const browser = await puppeteer.launch({ headless: true });
   //如果為false則會開啟瀏覽器，適合用作於debug時。
   const page = await browser.newPage();
@@ -64,17 +77,19 @@ const dataSource = JSON.parse(fs.readFileSync("data.json"));
 
   if (newData.length === 0) {
     console.log("No new data");
-    process.exit(1);
+  } else {
+    sendLineMessage();
   }
+};
 
+const sendLineMessage = () => {
   const MessagingApiClient = line.messagingApi.MessagingApiClient;
   const client = new MessagingApiClient({
-    channelAccessToken: ""
+    channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
   });
-
-  const flexMessage = flexTemplate(newData);
+  const flexMessage = flexTemplate();
   client.pushMessage({
-    to: "Uea01d16a19509c86910fad8ccf5e1803",
+    to: process.env.USER_ID,
     messages: [flexMessage]
   });
-})();
+};

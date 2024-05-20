@@ -12,6 +12,8 @@
   "license": "ISC",
   "dependencies": {
     "@line/bot-sdk": "^9.2.2",
+    "dotenv": "^16.4.5",
+    "node-cron": "^3.0.3",
     "puppeteer": "^22.8.0"
   }
 }
