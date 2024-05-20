@@ -10,4 +10,4 @@ jobs:
 
     steps:
     - name: Call Vercel API
-      run: curl -X GET https://web-crawler-sandy.vercel.app/yungching
+      run: curl -X GET https://web-crawler-sandy.vercel.app/yungching.js
