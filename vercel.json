@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "cron-job.js",
+      "use": "@vercel/node"
+    }
+  ]
+}
