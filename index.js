@@ -6,6 +6,7 @@ import { pageParser as pageParser_sinyi } from "./pageParser_sinyi.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
 import cron from "node-cron";
+import express from "express";
 import mongoose from "mongoose";
 import { HouseYungChing, HouseSinyi } from "./model/houseData.js";
 
@@ -212,3 +213,6 @@ mongoose.connect(db).then(con => {
     { runOnInit: true }
   );
 });
+
+const app = express();
+app.listen(3000);
