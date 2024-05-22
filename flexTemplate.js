@@ -1,7 +1,7 @@
 export const flexTemplate = data => {
   return {
     type: "flex",
-    altText: "this is a flex message",
+    altText: "找到新房子囉",
     contents: {
       type: "carousel",
       contents: data.map(item => ({

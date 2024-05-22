@@ -1,7 +1,0 @@
-name: "housebot"
-branding:
-  icon: "activity"
-  color: "green"
-runs:
-  using: "node18"
-  main: "./index.js"

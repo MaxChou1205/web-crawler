@@ -9,7 +9,7 @@ import express from "express";
 
 cron.schedule(
   // execute every one hour
-  "* * * * *",
+  "0 * * * *",
   () => {
     console.log("running a task every hour");
     fetchData();
