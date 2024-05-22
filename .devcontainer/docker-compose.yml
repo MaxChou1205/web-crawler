@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  webcrawler:
+    image: webcrawler
+    build:
+      context: .
+      dockerfile: ../Dockerfile

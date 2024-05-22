@@ -1,13 +1,13 @@
-name: Schedule Cron Job
+# name: Schedule Cron Job
 
-on:
-  schedule:
-    - cron: "* * * * *"
+# on:
+#   schedule:
+#     - cron: "* * * * *"
 
-jobs:
-  call-vercel-api:
-    runs-on: ubuntu-latest
+# jobs:
+#   call-vercel-api:
+#     runs-on: ubuntu-latest
 
-    steps:
-    - name: Call Vercel API
-      run: curl -X GET https://web-crawler-sandy.vercel.app/yungching.js
+#     steps:
+#     - name: Call Vercel API
+#       run: curl -X GET https://web-crawler-sandy.vercel.app/yungching.js

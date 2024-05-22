@@ -21,11 +21,11 @@ RUN apt-get update \
     fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
     --no-install-recommends
 
-USER node
+RUN npm install -g pnpm
+
+# USER node
 
 WORKDIR /usr/src/app
-
-RUN npm install -g pnpm
 
 COPY package*.json ./
 
@@ -37,7 +37,7 @@ RUN pnpm install
 COPY . .
 
 
-USER node
+USER root
 
 EXPOSE 3000
 
