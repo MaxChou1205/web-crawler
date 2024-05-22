@@ -6,11 +6,12 @@ import { pageParser as pageParser_sinyi } from "./pageParser_sinyi.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
 import cron from "node-cron";
+import mongoose from "mongoose";
+import { HouseYungChing, HouseSinyi } from "./model/houseData.js";
 
 // yungching
 const fetchData = async () => {
-  const dataSource = JSON.parse(fs.readFileSync("./data.json"));
-
+  const dataSource = await HouseYungChing.find({});
   const browser = await puppeteer.launch({
     headless: true,
     // ignoreDefaultArgs: ["--disable-extensions"],
@@ -76,13 +77,11 @@ const fetchData = async () => {
     }
   }
 
-  dataSource.push(...newData);
-  fs.writeFileSync("data.json", JSON.stringify(dataSource));
-
+  await HouseYungChing.insertMany(newData);
   await browser.close();
 
   if (newData.length === 0) {
-    console.log("yungching no new data");
+    console.log("there is no new data in yungching");
   } else {
     const MessagingApiClient = line.messagingApi.MessagingApiClient;
     const client = new MessagingApiClient({
@@ -103,8 +102,7 @@ const fetchData = async () => {
 
 // sinyi
 const fetchData2 = async () => {
-  const dataSource = JSON.parse(fs.readFileSync("./data_sinyi.json"));
-
+  const dataSource = await HouseSinyi.find({});
   const browser = await puppeteer.launch({
     headless: true,
     // ignoreDefaultArgs: ["--disable-extensions"],
@@ -155,7 +153,6 @@ const fetchData2 = async () => {
     await page.waitForSelector(".buy-list-frame");
 
     const pageData = (await page.evaluate(pageParser_sinyi)).data;
-    console.log(pageData);
     const difference = pageData.filter(
       item => !dataSource.some(data => data.link === item.link)
     );
@@ -164,13 +161,11 @@ const fetchData2 = async () => {
     currentPage++;
   }
 
-  dataSource.push(...newData);
-  fs.writeFileSync("./data_sinyi.json", JSON.stringify(dataSource));
-
+  await HouseSinyi.insertMany(newData);
   await browser.close();
 
   if (newData.length === 0) {
-    console.log("sinyi no new data");
+    console.log("there is no new data in sinyi");
   } else {
     const MessagingApiClient = line.messagingApi.MessagingApiClient;
     const client = new MessagingApiClient({
@@ -189,18 +184,31 @@ const fetchData2 = async () => {
   }
 };
 
-cron.schedule(
-  // execute every one hour
-  "0 * * * *",
-  async () => {
-    try {
-      console.log("running a task every hour");
-      await fetchData();
-      await fetchData2();
-      console.log("task done");
-    } catch (error) {
-      console.error(error);
-    }
-  },
-  { runOnInit: true }
-);
+const db = process.env.DATABASE;
+mongoose.connect(db).then(con => {
+  console.log("db connected");
+  cron.schedule(
+    // execute every one hour
+    "0 * * * *",
+    async () => {
+      try {
+        console.log("running a task every hour");
+        await fetchData();
+        await fetchData2();
+
+        // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
+        // await HouseYungChing.deleteMany({});
+        // await HouseYungChing.insertMany(dataSource);
+
+        // const dataSource1 = JSON.parse(fs.readFileSync("./data_sinyi.json"));
+        // await HouseSinyi.deleteMany({});
+        // await HouseSinyi.insertMany(dataSource1);
+
+        console.log("task done");
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    { runOnInit: true }
+  );
+});
