@@ -24,3 +24,4 @@ houseSchema.pre('save', function(next) {
 
 export const HouseYungChing = mongoose.model("house_yungching", houseSchema);
 export const HouseSinyi = mongoose.model("house_sinyi", houseSchema);
+export const HouseHbhousing = mongoose.model("house_hbhousing", houseSchema);
