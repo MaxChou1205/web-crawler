@@ -67,6 +67,7 @@ const fetchData = async browser => {
   }
 
   await HouseYungChing.insertMany(newData);
+  page.close();
 
   if (newData.length === 0) {
     console.log("there is no new data in yungching");
@@ -134,6 +135,7 @@ const fetchData2 = async browser => {
   }
 
   await HouseSinyi.insertMany(newData);
+  page.close();
 
   if (newData.length === 0) {
     console.log("there is no new data in sinyi");
@@ -196,6 +198,7 @@ const fetchData3 = async browser => {
   );
 
   await HouseHbhousing.insertMany(difference);
+  page.close();
 
   if (difference.length === 0) {
     console.log("there is no new data in hbhouse");
@@ -235,11 +238,10 @@ mongoose.connect(db).then(con => {
             "--use-gl=egl",
             "--no-zygote"
           ],
-          // executablePath:
-          //   process.env.NODE_ENV === "production"
-          //     ? process.env.PUPPETEER_EXECUTABLE_PATH
-          //     : puppeteer.executablePath(),
-          protocolTimeout: 0
+          executablePath:
+            process.env.NODE_ENV === "production"
+              ? process.env.PUPPETEER_EXECUTABLE_PATH
+              : puppeteer.executablePath(),
         });
 
         await fetchData(browser);
