@@ -15,24 +15,8 @@ import {
 } from "./model/houseData.js";
 
 // yungching
-const fetchData = async () => {
+const fetchData = async browser => {
   const dataSource = await HouseYungChing.find({});
-  const browser = await puppeteer.launch({
-    headless: true,
-    // ignoreDefaultArgs: ["--disable-extensions"],
-    args: [
-      "--disable-setuid-sandbox",
-      "--no-sandbox",
-      "single-process",
-      "--use-gl=egl",
-      "--no-zygote"
-    ],
-    executablePath:
-      process.env.NODE_ENV === "production"
-        ? process.env.PUPPETEER_EXECUTABLE_PATH
-        : puppeteer.executablePath()
-  });
-  //如果為false則會開啟瀏覽器，適合用作於debug時。
   const page = await browser.newPage();
   await page.setRequestInterception(true);
   page.on("request", request => {
@@ -83,7 +67,6 @@ const fetchData = async () => {
   }
 
   await HouseYungChing.insertMany(newData);
-  await browser.close();
 
   if (newData.length === 0) {
     console.log("there is no new data in yungching");
@@ -106,24 +89,8 @@ const fetchData = async () => {
 };
 
 // sinyi
-const fetchData2 = async () => {
+const fetchData2 = async browser => {
   const dataSource = await HouseSinyi.find({});
-  const browser = await puppeteer.launch({
-    headless: true,
-    // ignoreDefaultArgs: ["--disable-extensions"],
-    args: [
-      "--disable-setuid-sandbox",
-      "--no-sandbox",
-      "single-process",
-      "--use-gl=egl",
-      "--no-zygote"
-    ],
-    executablePath:
-      process.env.NODE_ENV === "production"
-        ? process.env.PUPPETEER_EXECUTABLE_PATH
-        : puppeteer.executablePath()
-  });
-  //如果為false則會開啟瀏覽器，適合用作於debug時。
   const page = await browser.newPage();
   await page.setRequestInterception(true);
   page.on("request", request => {
@@ -167,7 +134,6 @@ const fetchData2 = async () => {
   }
 
   await HouseSinyi.insertMany(newData);
-  await browser.close();
 
   if (newData.length === 0) {
     console.log("there is no new data in sinyi");
@@ -190,27 +156,15 @@ const fetchData2 = async () => {
 };
 
 // hbhousing
-const fetchData3 = async () => {
+const fetchData3 = async browser => {
   const dataSource = await HouseHbhousing.find({});
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      "--disable-setuid-sandbox",
-      "--no-sandbox",
-      "single-process",
-      "--use-gl=egl",
-      "--no-zygote"
-    ],
-    executablePath:
-      process.env.NODE_ENV === "production"
-        ? process.env.PUPPETEER_EXECUTABLE_PATH
-        : puppeteer.executablePath()
-  });
-  //如果為false則會開啟瀏覽器，適合用作於debug時。
   const page = await browser.newPage();
+  page.setDefaultNavigationTimeout(0);
   await page.setRequestInterception(true);
   page.on("request", request => {
-    if (["font", "image","stylesheet"].indexOf(request.resourceType()) !== -1) {
+    if (
+      ["font", "image", "stylesheet"].indexOf(request.resourceType()) !== -1
+    ) {
       request.abort();
     } else {
       request.continue();
@@ -219,7 +173,7 @@ const fetchData3 = async () => {
 
   const url = `https://www.hbhousing.com.tw/BuyHouse/`;
   await page.goto(url, {
-    waitUntil: "domcontentloaded",
+    waitUntil: "load",
     timeout: 0
   });
   await page.waitForSelector("#MainContent_searchbox_container");
@@ -228,13 +182,13 @@ const fetchData3 = async () => {
   await setSearchCondition(page, "台北市", "文山區");
   await page.waitForNetworkIdle();
   result.push(...(await extractData(page)));
-  await nextPage(page)
+  await nextPage(page);
   result.push(...(await extractData(page)));
 
   await setSearchCondition(page, "新北市", "新店區");
   await page.waitForNetworkIdle();
   result.push(...(await extractData(page)));
-  await nextPage(page)
+  await nextPage(page);
   result.push(...(await extractData(page)));
 
   const difference = result.filter(
@@ -242,7 +196,6 @@ const fetchData3 = async () => {
   );
 
   await HouseHbhousing.insertMany(difference);
-  await browser.close();
 
   if (difference.length === 0) {
     console.log("there is no new data in hbhouse");
@@ -273,9 +226,24 @@ mongoose.connect(db).then(con => {
     async () => {
       try {
         console.log("running a task every hour");
-        await fetchData();
-        await fetchData2();
-        await fetchData3();
+        const browser = await puppeteer.launch({
+          headless: true,
+          args: [
+            "--disable-setuid-sandbox",
+            "--no-sandbox",
+            "single-process",
+            "--use-gl=egl",
+            "--no-zygote"
+          ],
+          executablePath:
+            process.env.NODE_ENV === "production"
+              ? process.env.PUPPETEER_EXECUTABLE_PATH
+              : puppeteer.executablePath()
+        });
+
+        await fetchData(browser);
+        await fetchData2(browser);
+        await fetchData3(browser);
 
         // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
         // await HouseYungChing.deleteMany({});
@@ -288,6 +256,8 @@ mongoose.connect(db).then(con => {
         console.log("task done");
       } catch (error) {
         console.error(error);
+      } finally {
+        browser.close();
       }
     },
     { runOnInit: true }

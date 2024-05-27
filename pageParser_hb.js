@@ -60,6 +60,10 @@ export async function extractData(page) {
     const items = document.querySelectorAll(".house__list__item");
     items.forEach(item => {
       const titleElement = item.querySelector(".item__header__tit a");
+      const link =
+        titleElement?.href.indexOf("&") > -1
+          ? titleElement?.href.substring(0, titleElement?.href.indexOf("&"))
+          : titleElement?.href;
       const priceElement = item.querySelector(
         ".item__info__header .hlight.color--red"
       );
@@ -80,11 +84,11 @@ export async function extractData(page) {
       const tempTags = [...item.querySelectorAll(".item__info__header > span")]
         .slice(2)
         .map(item => item.textContent);
-      const tags = [tempTags.slice(0, 6).join(''), tempTags.slice(6).join('')];
+      const tags = [tempTags.slice(0, 6).join(""), tempTags.slice(6).join("")];
 
       result.push({
         image: images.length > 0 ? images[0] : "",
-        link: titleElement?.href,
+        link,
         title: titleElement?.innerText.trim(),
         price: priceElement.textContent.trim(),
         location: addressElement?.innerText.trim(),
