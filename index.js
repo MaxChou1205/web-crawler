@@ -307,8 +307,8 @@ mongoose.connect(db).then(con => {
     // execute every one hour
     "0 * * * *",
     async () => {
-      let browser = await puppeteer.launch({
-        headless: false,
+      const browser = await puppeteer.launch({
+        headless: true,
         args: [
           "--disable-setuid-sandbox",
           "--no-sandbox",
@@ -327,7 +327,7 @@ mongoose.connect(db).then(con => {
         await fetchData(browser);
         await fetchData2(browser);
         await fetchData3(browser);
-        await fetchData4(browser);
+        // await fetchData4(browser);
 
         // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
         // await HouseYungChing.deleteMany({});
