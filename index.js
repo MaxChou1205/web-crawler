@@ -259,12 +259,11 @@ const fetchData4 = async browser => {
     while (currentPage <= totalPages) {
       const url = `${baseUrl}/${region}/800-1800-price/電梯大樓-公寓-套房-type/1-ord/page${currentPage}.html`;
       await page.goto(url, {
-        waitUntil: "domcontentloaded",
+        waitUntil: "load",
         timeout: 0
       });
 
-      await page.waitForSelector(".object-virtical-list");
-      await page.waitForNetworkIdle();
+      await page.waitForSelector(".buy-object-info");
 
       const result = await extractData_ct(page);
 
@@ -322,13 +321,27 @@ mongoose.connect(db).then(con => {
             ? process.env.PUPPETEER_EXECUTABLE_PATH
             : puppeteer.executablePath()
       });
+      const browser2 = await puppeteer.launch({
+        headless: false,
+        args: [
+          "--disable-setuid-sandbox",
+          "--no-sandbox",
+          "single-process",
+          "--use-gl=egl",
+          "--no-zygote"
+        ],
+        executablePath:
+          process.env.NODE_ENV === "production"
+            ? process.env.PUPPETEER_EXECUTABLE_PATH
+            : puppeteer.executablePath()
+      });
       try {
         console.log("running a task every hour");
 
         await fetchData(browser);
         await fetchData2(browser);
         await fetchData3(browser);
-        await fetchData4(browser);
+        await fetchData4(browser2);
 
         // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
         // await HouseYungChing.deleteMany({});
@@ -343,6 +356,7 @@ mongoose.connect(db).then(con => {
         console.error(error);
       } finally {
         browser.close();
+        browser2.close();
       }
     },
     { runOnInit: true }
