@@ -307,22 +307,8 @@ mongoose.connect(db).then(con => {
     // execute every one hour
     "0 * * * *",
     async () => {
-      const browser = await puppeteer.launch({
+      let browser = await puppeteer.launch({
         headless: true,
-        args: [
-          "--disable-setuid-sandbox",
-          "--no-sandbox",
-          "single-process",
-          "--use-gl=egl",
-          "--no-zygote"
-        ],
-        executablePath:
-          process.env.NODE_ENV === "production"
-            ? process.env.PUPPETEER_EXECUTABLE_PATH
-            : puppeteer.executablePath()
-      });
-      const browser2 = await puppeteer.launch({
-        headless: false,
         args: [
           "--disable-setuid-sandbox",
           "--no-sandbox",
@@ -341,7 +327,22 @@ mongoose.connect(db).then(con => {
         await fetchData(browser);
         await fetchData2(browser);
         await fetchData3(browser);
-        await fetchData4(browser2);
+        await browser.close();
+        browser = await puppeteer.launch({
+          headless: false,
+          args: [
+            "--disable-setuid-sandbox",
+            "--no-sandbox",
+            "single-process",
+            "--use-gl=egl",
+            "--no-zygote"
+          ],
+          executablePath:
+            process.env.NODE_ENV === "production"
+              ? process.env.PUPPETEER_EXECUTABLE_PATH
+              : puppeteer.executablePath()
+        });
+        await fetchData4(browser);
 
         // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
         // await HouseYungChing.deleteMany({});
@@ -356,7 +357,6 @@ mongoose.connect(db).then(con => {
         console.error(error);
       } finally {
         browser.close();
-        browser2.close();
       }
     },
     { runOnInit: true }
