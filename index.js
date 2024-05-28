@@ -308,7 +308,7 @@ mongoose.connect(db).then(con => {
     "0 * * * *",
     async () => {
       let browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: [
           "--disable-setuid-sandbox",
           "--no-sandbox",
@@ -327,21 +327,6 @@ mongoose.connect(db).then(con => {
         await fetchData(browser);
         await fetchData2(browser);
         await fetchData3(browser);
-        await browser.close();
-        browser = await puppeteer.launch({
-          headless: false,
-          args: [
-            "--disable-setuid-sandbox",
-            "--no-sandbox",
-            "single-process",
-            "--use-gl=egl",
-            "--no-zygote"
-          ],
-          executablePath:
-            process.env.NODE_ENV === "production"
-              ? process.env.PUPPETEER_EXECUTABLE_PATH
-              : puppeteer.executablePath()
-        });
         await fetchData4(browser);
 
         // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
