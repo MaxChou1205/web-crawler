@@ -86,6 +86,7 @@ const fetchData = async browser => {
         messages: [flexMessage]
       });
     }
+    console.log("finished send message with yungching");
   }
 };
 
@@ -154,6 +155,7 @@ const fetchData2 = async browser => {
         messages: [flexMessage]
       });
     }
+    console.log("finished send message with sinyi");
   }
 };
 
@@ -217,6 +219,7 @@ const fetchData3 = async browser => {
         messages: [flexMessage]
       });
     }
+    console.log("finished send message with hbhouse");
   }
 };
 
@@ -227,22 +230,22 @@ mongoose.connect(db).then(con => {
     // execute every one hour
     "0 * * * *",
     async () => {
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          "--disable-setuid-sandbox",
+          "--no-sandbox",
+          "single-process",
+          "--use-gl=egl",
+          "--no-zygote"
+        ],
+        executablePath:
+          process.env.NODE_ENV === "production"
+            ? process.env.PUPPETEER_EXECUTABLE_PATH
+            : puppeteer.executablePath()
+      });
       try {
         console.log("running a task every hour");
-        const browser = await puppeteer.launch({
-          headless: true,
-          args: [
-            "--disable-setuid-sandbox",
-            "--no-sandbox",
-            "single-process",
-            "--use-gl=egl",
-            "--no-zygote"
-          ],
-          executablePath:
-            process.env.NODE_ENV === "production"
-              ? process.env.PUPPETEER_EXECUTABLE_PATH
-              : puppeteer.executablePath(),
-        });
 
         await fetchData(browser);
         await fetchData2(browser);
