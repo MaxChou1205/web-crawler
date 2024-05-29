@@ -229,19 +229,15 @@ const fetchData3 = async browser => {
 const fetchData4 = async browser => {
   const dataSource = await HouseCt.find({});
   const page = await browser.newPage();
+  await page.setUserAgent(
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
+  );
   await page.setRequestInterception(true);
   page.on("request", request => {
     if (
       ["stylesheet", "font", "image"].indexOf(request.resourceType()) !== -1
     ) {
       request.abort();
-    } else if (request.resourceType() === "image") {
-      const url = request.url();
-      if (url.includes("v1/image")) {
-        request.continue();
-      } else {
-        request.abort();
-      }
     } else {
       request.continue();
     }
@@ -327,7 +323,7 @@ mongoose.connect(db).then(con => {
         await fetchData(browser);
         await fetchData2(browser);
         await fetchData3(browser);
-        // await fetchData4(browser);
+        await fetchData4(browser);
 
         // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
         // await HouseYungChing.deleteMany({});
