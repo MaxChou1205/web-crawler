@@ -260,7 +260,7 @@ const fetchData4 = async browser => {
       });
 
       await page.waitForSelector(".objectList");
-      await page.$eval(".ct-green-button", button => button.click());
+      await page.waitForResponse(response => response.url().includes('/api/house_list.ashx'));
 
       const result = await extractData_ct(page);
 
