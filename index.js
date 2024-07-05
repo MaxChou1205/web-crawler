@@ -259,7 +259,8 @@ const fetchData4 = async browser => {
         timeout: 0
       });
 
-      await page.waitForSelector(".buy-object-info");
+      await page.waitForSelector(".objectList");
+      await page.$eval(".ct-green-button", button => button.click());
 
       const result = await extractData_ct(page);
 
