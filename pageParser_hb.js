@@ -40,7 +40,7 @@ export async function setSearchCondition(page, city, area) {
     document.querySelector('input[name="q4L"]').value = "800";
   });
   await page.evaluate(() => {
-    document.querySelector('input[name="q4H"]').value = "1800";
+    document.querySelector('input[name="q4H"]').value = "2500";
   });
   await page.waitForNetworkIdle();
 

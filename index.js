@@ -45,7 +45,7 @@ const fetchData = async browser => {
   for (let region of regionList) {
     const searchUrl = `${baseUrl}/region/住宅_p/${encodeURIComponent(
       region
-    )}/800-1800_price/?od=80`;
+    )}/800-2500_price/?od=80`;
     let currentPage = 1;
     const totalPages = 2;
 
@@ -120,7 +120,7 @@ const fetchData2 = async browser => {
   const totalPages = 2;
 
   while (currentPage <= totalPages) {
-    const url = `https://www.sinyi.com.tw/buy/list/800-1800-price/apartment-dalou-huaxia-type/NewTaipei-city/231-116-zip/publish-desc/${currentPage}`;
+    const url = `https://www.sinyi.com.tw/buy/list/800-2500-price/apartment-dalou-huaxia-type/NewTaipei-city/231-116-zip/publish-desc/${currentPage}`;
     await page.goto(url, {
       waitUntil: "domcontentloaded",
       timeout: 0
@@ -253,7 +253,7 @@ const fetchData4 = async browser => {
     const totalPages = 2;
 
     while (currentPage <= totalPages) {
-      const url = `${baseUrl}/${region}/800-1800-price/電梯大樓-公寓-套房-type/1-ord/page${currentPage}.html`;
+      const url = `${baseUrl}/${region}/800-2500-price/電梯大樓-公寓-套房-type/1-ord/page${currentPage}.html`;
       await page.goto(url, {
         waitUntil: "load",
         timeout: 0
