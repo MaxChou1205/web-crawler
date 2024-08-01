@@ -312,6 +312,7 @@ mongoose.connect(db).then(con => {
       } finally {
         browser.close();
         await sendMessage(messages);
+        console.log("messages sent");
         messages = [];
       }
     },
