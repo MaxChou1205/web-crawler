@@ -1,14 +1,13 @@
-export function pageParser() {
-  const parser = () => {
-    const elements = Array.from(
+export async function extractData(page) {
+  return await page.evaluate(() => {
+    const items = Array.from(
       document.querySelectorAll("[id^='buyHouseCard_']")
     );
-
-    const items = elements.map(element => {
-      let cardElement = element.querySelector(".LongInfoCard_TypeWeb");
+    return items.map(item => {
+      let cardElement = item.querySelector(".LongInfoCard_TypeWeb");
       return {
-        image: element.querySelector(".largeImg img").src,
-        link: element.querySelector("a").href,
+        image: item.querySelector(".largeImg img").src,
+        link: item.querySelector("a").href,
         title: cardElement
           .querySelector(".LongInfoCard_Type_Name")
           .textContent.trim(),
@@ -28,19 +27,13 @@ export function pageParser() {
             .textContent.trim(),
         details: Array.from(
           cardElement.querySelectorAll(".LongInfoCard_Type_HouseInfo span")
-        ).map(span => span.textContent.trim()),
+        ).map(item => item.textContent.trim()),
         tags: Array.from(
           cardElement.querySelectorAll(
             ".LongInfoCard_Type_SpecificTags .specificTag"
           )
-        ).map(span => span.textContent.trim())
+        ).map(item => item.textContent.trim())
       };
     });
-
-    return items;
-  };
-
-  return {
-    data: parser()
-  };
+  });
 }

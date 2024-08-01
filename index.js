@@ -1,8 +1,12 @@
 import "dotenv/config";
 import puppeteer from "puppeteer";
-import { pageParser } from "./pageParser.js";
-import { pageParser as pageParser_sinyi } from "./pageParser_sinyi.js";
-import { setSearchCondition, extractData, nextPage } from "./pageParser_hb.js";
+import { extractData as extractData_yungching } from "./pageParser_yungching.js";
+import { extractData as extractData_sinyi } from "./pageParser_sinyi.js";
+import {
+  setSearchCondition,
+  extractData as extractData_hb,
+  nextPage
+} from "./pageParser_hb.js";
 import { extractData as extractData_ct } from "./pageParser_ct.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
@@ -17,7 +21,7 @@ import {
 } from "./model/houseData.js";
 
 // yungching
-const fetchData = async browser => {
+const fetchYungChing = async (browser, messages) => {
   const dataSource = await HouseYungChing.find({});
   const page = await browser.newPage();
   await page.setRequestInterception(true);
@@ -58,7 +62,7 @@ const fetchData = async browser => {
 
       await page.waitForSelector(".l-item-list");
 
-      const pageData = (await page.evaluate(pageParser, baseUrl)).data;
+      const pageData = await extractData_yungching(page, baseUrl);
       const difference = pageData.filter(
         item => !dataSource.some(data => data.link === item.link)
       );
@@ -74,26 +78,13 @@ const fetchData = async browser => {
   if (newData.length === 0) {
     console.log("there is no new data in yungching");
   } else {
-    const MessagingApiClient = line.messagingApi.MessagingApiClient;
-    const client = new MessagingApiClient({
-      channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
-    });
-
-    let messages = [];
-    for (let i = 0; i < newData.length; i += 12) {
-      messages = newData.slice(i, i + 12);
-      const flexMessage = flexTemplate(messages);
-      client.pushMessage({
-        to: process.env.USER_ID,
-        messages: [flexMessage]
-      });
-    }
-    console.log("finished send message with yungching");
+    messages.push(...newData);
+    console.log("new data in yungching");
   }
 };
 
 // sinyi
-const fetchData2 = async browser => {
+const fetchSinyi = async (browser, messages) => {
   const dataSource = await HouseSinyi.find({});
   const page = await browser.newPage();
   await page.setRequestInterception(true);
@@ -128,8 +119,8 @@ const fetchData2 = async browser => {
 
     await page.waitForSelector(".buy-list-frame");
 
-    const pageData = (await page.evaluate(pageParser_sinyi)).data;
-    const difference = pageData.filter(
+    const result = await extractData_sinyi(page);
+    const difference = result.filter(
       item => !dataSource.some(data => data.link === item.link)
     );
 
@@ -143,26 +134,13 @@ const fetchData2 = async browser => {
   if (newData.length === 0) {
     console.log("there is no new data in sinyi");
   } else {
-    const MessagingApiClient = line.messagingApi.MessagingApiClient;
-    const client = new MessagingApiClient({
-      channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
-    });
-
-    let messages = [];
-    for (let i = 0; i < newData.length; i += 12) {
-      messages = newData.slice(i, i + 12);
-      const flexMessage = flexTemplate(messages);
-      client.pushMessage({
-        to: process.env.USER_ID,
-        messages: [flexMessage]
-      });
-    }
-    console.log("finished send message with sinyi");
+    messages.push(...newData);
+    console.log("new data in sinyi");
   }
 };
 
 // hbhousing
-const fetchData3 = async browser => {
+const fetchHb = async (browser, messages) => {
   const dataSource = await HouseHbhousing.find({});
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(0);
@@ -187,15 +165,15 @@ const fetchData3 = async browser => {
   const result = [];
   await setSearchCondition(page, "台北市", "文山區");
   await page.waitForNetworkIdle();
-  result.push(...(await extractData(page)));
+  result.push(...(await extractData_hb(page)));
   await nextPage(page);
-  result.push(...(await extractData(page)));
+  result.push(...(await extractData_hb(page)));
 
   await setSearchCondition(page, "新北市", "新店區");
   await page.waitForNetworkIdle();
-  result.push(...(await extractData(page)));
+  result.push(...(await extractData_hb(page)));
   await nextPage(page);
-  result.push(...(await extractData(page)));
+  result.push(...(await extractData_hb(page)));
 
   const difference = result.filter(
     item => !dataSource.some(data => data.link === item.link)
@@ -207,26 +185,13 @@ const fetchData3 = async browser => {
   if (difference.length === 0) {
     console.log("there is no new data in hbhouse");
   } else {
-    const MessagingApiClient = line.messagingApi.MessagingApiClient;
-    const client = new MessagingApiClient({
-      channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
-    });
-
-    let messages = [];
-    for (let i = 0; i < difference.length; i += 12) {
-      messages = difference.slice(i, i + 12);
-      const flexMessage = flexTemplate(messages);
-      client.pushMessage({
-        to: process.env.USER_ID,
-        messages: [flexMessage]
-      });
-    }
-    console.log("finished send message with hbhouse");
+    messages.push(...difference);
+    console.log("new data in hbhouse");
   }
 };
 
 // ct house
-const fetchData4 = async browser => {
+const fetchCt = async (browser, messages) => {
   const dataSource = await HouseCt.find({});
   const page = await browser.newPage();
   await page.setUserAgent(
@@ -260,7 +225,9 @@ const fetchData4 = async browser => {
       });
 
       await page.waitForSelector(".objectList");
-      await page.waitForResponse(response => response.url().includes('/api/house_list.ashx'));
+      await page.waitForResponse(response =>
+        response.url().includes("/api/house_list.ashx")
+      );
 
       const result = await extractData_ct(page);
 
@@ -279,21 +246,24 @@ const fetchData4 = async browser => {
   if (newData.length === 0) {
     console.log("there is no new data in ct");
   } else {
-    const MessagingApiClient = line.messagingApi.MessagingApiClient;
-    const client = new MessagingApiClient({
-      channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
-    });
+    messages.push(...newData);
+    console.log("new data in ct");
+  }
+};
 
-    let messages = [];
-    for (let i = 0; i < newData.length; i += 12) {
-      messages = newData.slice(i, i + 12);
-      const flexMessage = flexTemplate(messages);
-      client.pushMessage({
-        to: process.env.USER_ID,
-        messages: [flexMessage]
-      });
-    }
-    console.log("finished send message with ct");
+const sendMessage = async messages => {
+  const MessagingApiClient = line.messagingApi.MessagingApiClient;
+  const client = new MessagingApiClient({
+    channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
+  });
+
+  for (let i = 0; i < messages.length; i += 12) {
+    const currentBatch = messages.slice(i, i + 12);
+    const flexMessage = flexTemplate(currentBatch);
+    client.pushMessage({
+      to: process.env.USER_ID,
+      messages: [flexMessage]
+    });
   }
 };
 
@@ -318,13 +288,15 @@ mongoose.connect(db).then(con => {
             ? process.env.PUPPETEER_EXECUTABLE_PATH
             : puppeteer.executablePath()
       });
+      const messages = [];
       try {
         console.log("running a task every hour");
 
-        await fetchData(browser);
-        await fetchData2(browser);
-        await fetchData3(browser);
-        await fetchData4(browser);
+        await fetchYungChing(browser, messages);
+        await fetchSinyi(browser, messages);
+        await fetchHb(browser, messages);
+        await fetchCt(browser, messages);
+        
 
         // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
         // await HouseYungChing.deleteMany({});
@@ -339,6 +311,8 @@ mongoose.connect(db).then(con => {
         console.error(error);
       } finally {
         browser.close();
+        await sendMessage(messages);
+        messages = [];
       }
     },
     { runOnInit: true }

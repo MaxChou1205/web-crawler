@@ -56,7 +56,6 @@ export async function setSearchCondition(page, city, area) {
 export async function extractData(page) {
   return await page.evaluate(() => {
     let result = [];
-    // for (let i = 0; i < 2; i++) {
     const items = document.querySelectorAll(".house__list__item");
     items.forEach(item => {
       const titleElement = item.querySelector(".item__header__tit a");
@@ -101,9 +100,6 @@ export async function extractData(page) {
       });
     });
 
-    // document.querySelector(".house__list__pagenum li[data-page='2']").click();
-    // await page.waitForNetworkIdle();
-    // }
     return result;
   });
 }

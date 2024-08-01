@@ -1,7 +1,6 @@
 export async function extractData(page) {
   return await page.evaluate(() => {
     const items = Array.from(document.querySelectorAll(".object-list-item"));
-    console.log(items);
     return items.map(item => ({
       image: item
         .querySelector(".object-preview-image img")
