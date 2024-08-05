@@ -199,8 +199,11 @@ const fetchCt = async (browser, messages) => {
   );
   await page.setRequestInterception(true);
   page.on("request", request => {
-    if (
-      ["stylesheet", "font", "image"].indexOf(request.resourceType()) !== -1
+    if (["font", "image"].indexOf(request.resourceType()) !== -1) {
+      request.abort();
+    } else if (
+      request.url().includes("analytics") ||
+      request.url().includes("google")
     ) {
       request.abort();
     } else {
@@ -224,9 +227,12 @@ const fetchCt = async (browser, messages) => {
         timeout: 0
       });
 
-      await page.waitForSelector(".objectList");
-      await page.waitForResponse(response =>
-        response.url().includes("/api/house_list.ashx")
+      await retry(
+        async () =>
+          await page.waitForResponse(response =>
+            response.url().includes("/api/house_list.ashx")
+          ),
+        3
       );
 
       const result = await extractData_ct(page);
@@ -265,6 +271,21 @@ const sendMessage = async messages => {
       messages: [flexMessage]
     });
   }
+
+  if (messages.length > 0) {
+    console.log("messages sent");
+  }
+};
+
+const retry = async (promiseFactory, retryCount) => {
+  try {
+    return await promiseFactory();
+  } catch (error) {
+    if (retryCount <= 0) {
+      throw error;
+    }
+    return await retry(promiseFactory, retryCount - 1);
+  }
 };
 
 const db = process.env.DATABASE;
@@ -296,7 +317,6 @@ mongoose.connect(db).then(con => {
         await fetchSinyi(browser, messages);
         await fetchHb(browser, messages);
         await fetchCt(browser, messages);
-        
 
         // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
         // await HouseYungChing.deleteMany({});
@@ -312,7 +332,6 @@ mongoose.connect(db).then(con => {
       } finally {
         browser.close();
         await sendMessage(messages);
-        console.log("messages sent");
         messages = [];
       }
     },
