@@ -266,10 +266,14 @@ const sendMessage = async messages => {
   for (let i = 0; i < messages.length; i += 12) {
     const currentBatch = messages.slice(i, i + 12);
     const flexMessage = flexTemplate(currentBatch);
-    client.pushMessage({
-      to: process.env.USER_ID,
-      messages: [flexMessage]
-    });
+    try {
+      await client.pushMessage({
+        to: process.env.USER_ID,
+        messages: [flexMessage]
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   if (messages.length > 0) {

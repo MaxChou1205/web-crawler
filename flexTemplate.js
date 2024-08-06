@@ -9,7 +9,7 @@ export const flexTemplate = data => {
         size: "micro",
         hero: {
           type: "image",
-          url: item.image,
+          url: item.image || "https://fakeimg.pl/10x10/",
           size: "full",
           aspectMode: "cover",
           aspectRatio: "320:213",
