@@ -5,7 +5,7 @@ import { extractData as extractData_sinyi } from "./pageParser_sinyi.js";
 import {
   setSearchCondition,
   extractData as extractData_hb,
-  nextPage
+  nextPage,
 } from "./pageParser_hb.js";
 import { extractData as extractData_ct } from "./pageParser_ct.js";
 import * as line from "@line/bot-sdk";
@@ -17,7 +17,7 @@ import {
   HouseYungChing,
   HouseSinyi,
   HouseHbhousing,
-  HouseCt
+  HouseCt,
 } from "./model/houseData.js";
 
 // yungching
@@ -25,7 +25,7 @@ const fetchYungChing = async (browser, messages) => {
   const dataSource = await HouseYungChing.find({});
   const page = await browser.newPage();
   await page.setRequestInterception(true);
-  page.on("request", request => {
+  page.on("request", (request) => {
     if (
       ["stylesheet", "font", "script"].indexOf(request.resourceType()) !== -1
     ) {
@@ -43,7 +43,7 @@ const fetchYungChing = async (browser, messages) => {
   });
 
   const newData = [];
-  const baseUrl = "https://buy.yungching.com.tw";
+  const baseUrl = "https://buy.yungching.com.tw/list";
   const regionList = ["新北市-新店區_c", "台北市-文山區_c"];
 
   for (let region of regionList) {
@@ -57,14 +57,14 @@ const fetchYungChing = async (browser, messages) => {
       const url = `${searchUrl}&pg=${currentPage}`;
       await page.goto(url, {
         waitUntil: "domcontentloaded",
-        timeout: 0
+        timeout: 0,
       });
 
-      await page.waitForSelector(".l-item-list");
+      await page.waitForSelector(".buy-list");
 
       const pageData = await extractData_yungching(page, baseUrl);
       const difference = pageData.filter(
-        item => !dataSource.some(data => data.link === item.link)
+        (item) => !dataSource.some((data) => data.link === item.link)
       );
 
       newData.push(...difference);
@@ -88,7 +88,7 @@ const fetchSinyi = async (browser, messages) => {
   const dataSource = await HouseSinyi.find({});
   const page = await browser.newPage();
   await page.setRequestInterception(true);
-  page.on("request", request => {
+  page.on("request", (request) => {
     if (
       ["stylesheet", "font", "script"].indexOf(request.resourceType()) !== -1
     ) {
@@ -114,14 +114,14 @@ const fetchSinyi = async (browser, messages) => {
     const url = `https://www.sinyi.com.tw/buy/list/800-2500-price/apartment-dalou-huaxia-type/NewTaipei-city/231-116-zip/publish-desc/${currentPage}`;
     await page.goto(url, {
       waitUntil: "domcontentloaded",
-      timeout: 0
+      timeout: 0,
     });
 
     await page.waitForSelector(".buy-list-frame");
 
     const result = await extractData_sinyi(page);
     const difference = result.filter(
-      item => !dataSource.some(data => data.link === item.link)
+      (item) => !dataSource.some((data) => data.link === item.link)
     );
 
     newData.push(...difference);
@@ -145,7 +145,7 @@ const fetchHb = async (browser, messages) => {
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(0);
   await page.setRequestInterception(true);
-  page.on("request", request => {
+  page.on("request", (request) => {
     if (
       ["font", "image", "stylesheet"].indexOf(request.resourceType()) !== -1
     ) {
@@ -158,7 +158,7 @@ const fetchHb = async (browser, messages) => {
   const url = `https://www.hbhousing.com.tw/BuyHouse/`;
   await page.goto(url, {
     waitUntil: "load",
-    timeout: 0
+    timeout: 0,
   });
   await page.waitForSelector("#MainContent_searchbox_container");
 
@@ -176,7 +176,7 @@ const fetchHb = async (browser, messages) => {
   result.push(...(await extractData_hb(page)));
 
   const difference = result.filter(
-    item => !dataSource.some(data => data.link === item.link)
+    (item) => !dataSource.some((data) => data.link === item.link)
   );
 
   await HouseHbhousing.insertMany(difference);
@@ -198,7 +198,7 @@ const fetchCt = async (browser, messages) => {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
   );
   await page.setRequestInterception(true);
-  page.on("request", request => {
+  page.on("request", (request) => {
     if (["font", "image"].indexOf(request.resourceType()) !== -1) {
       request.abort();
     } else if (
@@ -224,12 +224,12 @@ const fetchCt = async (browser, messages) => {
       const url = `${baseUrl}/${region}/800-2500-price/電梯大樓-公寓-套房-type/1-ord/page${currentPage}.html`;
       await page.goto(url, {
         waitUntil: "load",
-        timeout: 0
+        timeout: 0,
       });
 
       await retry(
         async () =>
-          await page.waitForResponse(response =>
+          await page.waitForResponse((response) =>
             response.url().includes("/api/house_list.ashx")
           ),
         3
@@ -238,7 +238,7 @@ const fetchCt = async (browser, messages) => {
       const result = await extractData_ct(page);
 
       const difference = result.filter(
-        item => !dataSource.some(data => data.link === item.link)
+        (item) => !dataSource.some((data) => data.link === item.link)
       );
 
       newData.push(...difference);
@@ -257,10 +257,10 @@ const fetchCt = async (browser, messages) => {
   }
 };
 
-const sendMessage = async messages => {
+const sendMessage = async (messages) => {
   const MessagingApiClient = line.messagingApi.MessagingApiClient;
   const client = new MessagingApiClient({
-    channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN
+    channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
   });
 
   for (let i = 0; i < messages.length; i += 12) {
@@ -269,7 +269,7 @@ const sendMessage = async messages => {
     try {
       await client.pushMessage({
         to: process.env.USER_ID,
-        messages: [flexMessage]
+        messages: [flexMessage],
       });
     } catch (err) {
       console.error(err);
@@ -293,25 +293,25 @@ const retry = async (promiseFactory, retryCount) => {
 };
 
 const db = process.env.DATABASE;
-mongoose.connect(db).then(con => {
+mongoose.connect(db).then((con) => {
   console.log("db connected");
   cron.schedule(
     // execute every one hour
     "0 * * * *",
     async () => {
       const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: [
           "--disable-setuid-sandbox",
           "--no-sandbox",
           "single-process",
           "--use-gl=egl",
-          "--no-zygote"
+          "--no-zygote",
         ],
         executablePath:
           process.env.NODE_ENV === "production"
             ? process.env.PUPPETEER_EXECUTABLE_PATH
-            : puppeteer.executablePath()
+            : puppeteer.executablePath(),
       });
       const messages = [];
       try {
