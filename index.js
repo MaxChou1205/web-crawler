@@ -72,7 +72,9 @@ const fetchYungChing = async (browser, messages) => {
     }
   }
 
-  await HouseYungChing.insertMany(newData);
+  if (!dryRun) {
+    await HouseYungChing.insertMany(newData);
+  }
   page.close();
 
   if (newData.length === 0) {
@@ -128,7 +130,9 @@ const fetchSinyi = async (browser, messages) => {
     currentPage++;
   }
 
-  await HouseSinyi.insertMany(newData);
+  if (!dryRun) {
+    await HouseSinyi.insertMany(newData);
+  }
   page.close();
 
   if (newData.length === 0) {
@@ -179,7 +183,9 @@ const fetchHb = async (browser, messages) => {
     (item) => !dataSource.some((data) => data.link === item.link)
   );
 
-  await HouseHbhousing.insertMany(difference);
+  if (!dryRun) {
+    await HouseHbhousing.insertMany(difference);
+  }
   page.close();
 
   if (difference.length === 0) {
@@ -246,7 +252,9 @@ const fetchCt = async (browser, messages) => {
     }
   }
 
-  await HouseCt.insertMany(newData);
+  if (!dryRun) {
+    await HouseCt.insertMany(newData);
+  }
   page.close();
 
   if (newData.length === 0) {
@@ -293,6 +301,8 @@ const retry = async (promiseFactory, retryCount) => {
 };
 
 const db = process.env.DATABASE;
+const dryRun = Number(process.env.DRY_RUN);
+
 mongoose.connect(db).then((con) => {
   console.log("db connected");
   cron.schedule(

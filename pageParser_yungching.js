@@ -1,7 +1,7 @@
 export async function extractData(page, baseUrl) {
   return await page.evaluate((baseUrl) => {
     const items = Array.from(
-      document.querySelectorAll(".l-item-list .m-list-item")
+      document.querySelectorAll(".buy-list .buy-item")
     );
     return items.map((item) => ({
       image: document.querySelector(".img-wrapper img")?.src,
