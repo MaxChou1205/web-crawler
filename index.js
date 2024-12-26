@@ -300,7 +300,7 @@ mongoose.connect(db).then((con) => {
     "0 * * * *",
     async () => {
       const browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         args: [
           "--disable-setuid-sandbox",
           "--no-sandbox",
