@@ -11,7 +11,6 @@ import { extractData as extractData_ct } from "./pageParser_ct.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
 import cron from "node-cron";
-import express from "express";
 import mongoose from "mongoose";
 import {
   HouseYungChing,
@@ -352,6 +351,3 @@ mongoose.connect(db).then((con) => {
     { runOnInit: true }
   );
 });
-
-const app = express();
-app.listen(3000);
