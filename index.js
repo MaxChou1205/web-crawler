@@ -310,6 +310,7 @@ mongoose.connect(db).then((con) => {
     async () => {
       const browser = await puppeteer.launch({
         headless: true,
+        timeout: 0,
         args: [
           "--disable-setuid-sandbox",
           "--no-sandbox",
@@ -322,6 +323,17 @@ mongoose.connect(db).then((con) => {
             ? process.env.PUPPETEER_EXECUTABLE_PATH
             : puppeteer.executablePath(),
       });
+
+      browser.on("targetcreated", async (target) => {
+        const newPage = await target.page();
+        if (newPage) {
+          const newPageUrl = newPage.url();
+          if (newPageUrl.includes("https://events.hbhousing.com.tw/")) {
+            await newPage.close();
+          }
+        }
+      });
+
       const messages = [];
       try {
         console.log("running a task every hour");
