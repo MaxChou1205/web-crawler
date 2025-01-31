@@ -1,0 +1,22 @@
+name: Scheduled Job
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # runs the job every hour
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Run script
+        env:
+          DATABASE: ${{ secrets.DATABASE }}
+          CHANNEL_ACCESS_TOKEN: ${{ secrets.CHANNEL_ACCESS_TOKEN }}
+          USER_ID: ${{ secrets.USER_ID }}
+        run: |
+          npm install
+          node index.js
