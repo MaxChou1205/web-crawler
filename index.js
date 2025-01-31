@@ -302,64 +302,58 @@ const retry = async (promiseFactory, retryCount) => {
 const db = process.env.DATABASE;
 const dryRun = Number(process.env.DRY_RUN);
 
-mongoose.connect(db).then((con) => {
+mongoose.connect(db).then(async () => {
   console.log("db connected");
-  cron.schedule(
-    // execute every one hour
-    "0 * * * *",
-    async () => {
-      const browser = await puppeteer.launch({
-        headless: true,
-        timeout: 0,
-        args: [
-          "--disable-setuid-sandbox",
-          "--no-sandbox",
-          "single-process",
-          "--use-gl=egl",
-          "--no-zygote",
-        ],
-        executablePath:
-          process.env.NODE_ENV === "production"
-            ? process.env.PUPPETEER_EXECUTABLE_PATH
-            : puppeteer.executablePath(),
-      });
 
-      browser.on("targetcreated", async (target) => {
-        const newPage = await target.page();
-        if (newPage) {
-          const newPageUrl = newPage.url();
-          if (newPageUrl.includes("https://events.hbhousing.com.tw/")) {
-            await newPage.close();
-          }
-        }
-      });
+  const browser = await puppeteer.launch({
+    headless: true,
+    timeout: 0,
+    args: [
+      "--disable-setuid-sandbox",
+      "--no-sandbox",
+      "single-process",
+      "--use-gl=egl",
+      "--no-zygote",
+    ],
+    executablePath:
+      process.env.NODE_ENV === "production"
+        ? process.env.PUPPETEER_EXECUTABLE_PATH
+        : puppeteer.executablePath(),
+  });
 
-      const messages = [];
-      try {
-        console.log("running a task every hour");
-
-        await fetchYungChing(browser, messages);
-        await fetchSinyi(browser, messages);
-        await fetchHb(browser, messages);
-        await fetchCt(browser, messages);
-
-        // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
-        // await HouseYungChing.deleteMany({});
-        // await HouseYungChing.insertMany(dataSource);
-
-        // const dataSource1 = JSON.parse(fs.readFileSync("./data_sinyi.json"));
-        // await HouseSinyi.deleteMany({});
-        // await HouseSinyi.insertMany(dataSource1);
-
-        console.log("task done");
-      } catch (error) {
-        console.error(error);
-      } finally {
-        browser.close();
-        await sendMessage(messages);
-        messages = [];
+  browser.on("targetcreated", async (target) => {
+    const newPage = await target.page();
+    if (newPage) {
+      const newPageUrl = newPage.url();
+      if (newPageUrl.includes("https://events.hbhousing.com.tw/")) {
+        await newPage.close();
       }
-    },
-    { runOnInit: true }
-  );
+    }
+  });
+
+  const messages = [];
+  try {
+    console.log("running a task every hour");
+
+    await fetchYungChing(browser, messages);
+    await fetchSinyi(browser, messages);
+    await fetchHb(browser, messages);
+    await fetchCt(browser, messages);
+
+    // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
+    // await HouseYungChing.deleteMany({});
+    // await HouseYungChing.insertMany(dataSource);
+
+    // const dataSource1 = JSON.parse(fs.readFileSync("./data_sinyi.json"));
+    // await HouseSinyi.deleteMany({});
+    // await HouseSinyi.insertMany(dataSource1);
+
+    console.log("task done");
+  } catch (error) {
+    console.error(error);
+  } finally {
+    browser.close();
+    await sendMessage(messages);
+    messages = [];
+  }
 });
