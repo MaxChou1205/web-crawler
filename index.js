@@ -10,7 +10,6 @@ import {
 import { extractData as extractData_ct } from "./pageParser_ct.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
-import cron from "node-cron";
 import mongoose from "mongoose";
 import {
   HouseYungChing,
@@ -354,7 +353,6 @@ mongoose.connect(db).then(async () => {
   } finally {
     browser.close();
     await sendMessage(messages);
-    // messages = [];
-    mongoose.connection.close()
+    mongoose.connection.close();
   }
 });
