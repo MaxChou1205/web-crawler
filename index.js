@@ -117,7 +117,7 @@ const fetchSinyi = async (browser, messages) => {
       timeout: 0,
     });
 
-    await page.waitForSelector(".buy-list-frame");
+    await page.waitForSelector("[class*='buy-list-frame']");
 
     const result = await extractData_sinyi(page);
     const difference = result.filter(
@@ -162,7 +162,9 @@ const fetchHb = async (browser, messages) => {
     waitUntil: "load",
     timeout: 0,
   });
-  await page.waitForSelector("#MainContent_searchbox_container");
+  await page.waitForSelector(
+    ".container-max-w.relative.z-10.scroll-to-item-wrapper"
+  );
 
   const result = [];
   await setSearchCondition(page, "台北市", "文山區");
@@ -305,7 +307,7 @@ mongoose.connect(db).then(async () => {
   console.log("db connected");
 
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: dryRun ? false : true,
     timeout: 0,
     args: [
       "--disable-setuid-sandbox",
