@@ -91,7 +91,7 @@ export async function extractData(page) {
         link,
         title,
         price,
-        location,
+        location: address,
         description,
         details,
         tags,
