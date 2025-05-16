@@ -171,13 +171,13 @@ const fetchHb = async (browser, messages) => {
     while (currentPage <= totalPages) {
       const url = `https://www.hbhousing.com.tw/buyhouse/${addressEntry.address}/${addressEntry.zipCode}/mansion-style/800-2500-price/${currentPage}-page`;
       await page.goto(url, {
-        waitUntil: "domcontentloaded",
-        timeout: 0,
+        // waitUntil: "domcontentloaded",
+        // timeout: 0,
       });
 
-      await page.waitForSelector(
-        ".container-max-w.relative.z-10.scroll-to-item-wrapper"
-      );
+      // await page.waitForSelector(
+      //   ".container-max-w.relative.z-10.scroll-to-item-wrapper"
+      // );
 
       const result = await extractData_hb(page);
       const difference = result.filter(
