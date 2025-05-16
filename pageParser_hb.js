@@ -1,10 +1,10 @@
 export async function setSearchCondition(page, city, area) {
   // 城市
   await page.click(".selectform.selectpush.where:nth-child(2) > span"); // 展開城市下拉選單
-  await page.evaluate(city => {
+  await page.evaluate((city) => {
     const options = document.querySelectorAll("#sel_city li");
     const element = [...options].find(
-      option => option.textContent.trim() === city
+      (option) => option.textContent.trim() === city
     );
     element?.querySelector("input").click();
   }, city);
@@ -13,10 +13,10 @@ export async function setSearchCondition(page, city, area) {
   // 區域
   await page.waitForSelector("#sel_area");
   await page.click(".selectform.selectpush.where:nth-child(3) > span"); // 展開區域下拉選單
-  await page.evaluate(area => {
+  await page.evaluate((area) => {
     const options = document.querySelectorAll("#sel_area li");
     const element = [...options].find(
-      option => option.textContent.trim() === area
+      (option) => option.textContent.trim() === area
     );
     element?.querySelector("input").click();
   }, area);
@@ -27,7 +27,7 @@ export async function setSearchCondition(page, city, area) {
   await page.evaluate(() => {
     const options = document.querySelectorAll(".search-check ul li");
     const element = [...options].find(
-      option => option.textContent.trim() === "住宅"
+      (option) => option.textContent.trim() === "住宅"
     );
     if (element && !element.querySelector("input").checked)
       element?.querySelector("input").click();
@@ -56,47 +56,45 @@ export async function setSearchCondition(page, city, area) {
 export async function extractData(page) {
   return await page.evaluate(() => {
     let result = [];
-    const items = document.querySelectorAll(".house__list__item");
-    items.forEach(item => {
-      const titleElement = item.querySelector(".item__header__tit a");
-      const link =
-        titleElement?.href.indexOf("&") > -1
-          ? titleElement?.href.substring(0, titleElement?.href.indexOf("&"))
-          : titleElement?.href;
-      const priceElement = item.querySelector(
-        ".item__info__header .hlight.color--red"
-      );
+    const items = document.querySelectorAll(".\\@container");
+    items.forEach((item) => {
+      const titleElement = item.querySelector("h3 a");
+      const title = titleElement?.textContent.trim();
+      const link = titleElement?.href;
+
+      const priceElement = item.querySelector(".text-error span");
+      const price = priceElement?.textContent.trim();
+
       const addressElement = item.querySelector(
-        ".item__info__table ul li:first-child"
+        ".attribute:nth-child(3) span:not(.font-montserrat)"
       );
-      const descriptionElement = item.querySelector(".item-intro .item__intro");
-      const imageElements = item.querySelectorAll(
-        ".item__photo img, .item__pattern img"
-      );
+      const address = addressElement?.textContent.trim();
 
-      const images = [...imageElements]
-        .filter(img => /\.jpg\?\d+/.test(img.src))
-        .map(img => img.src || img.getAttribute("rel"));
+      const descriptionElement = item.querySelector("p.attribute:nth-child(2)");
+      const description = descriptionElement?.textContent.trim();
 
-      const details = item.querySelectorAll(".item__info__table ul li");
+      const imageElements = item.querySelectorAll(".splide__list img");
+      const images = Array.from(imageElements)
+        .map((img) => img.src)
+        .filter((src) => src);
 
-      const tempTags = [...item.querySelectorAll(".item__info__header > span")]
-        .slice(2)
-        .map(item => item.textContent);
-      const tags = [tempTags.slice(0, 6).join(""), tempTags.slice(6).join("")];
+      const details = item
+        .querySelector(".attribute:nth-child(3) span")
+        ?.textContent.trim()
+        .split("|");
+
+      const tagElements = item.querySelectorAll(".tag");
+      const tags = Array.from(tagElements).map((tag) => tag.textContent.trim());
 
       result.push({
         image: images.length > 0 ? images[0] : "",
         link,
-        title: titleElement?.innerText.trim(),
-        price: priceElement.textContent.trim(),
-        location: addressElement?.innerText.trim(),
-        description: descriptionElement?.innerText.trim(),
-        details: [...details]
-          .map(item => item.innerText.trim())
-          .slice(1)
-          .concat(tags),
-        tags
+        title,
+        price,
+        location,
+        description,
+        details,
+        tags,
       });
     });
 

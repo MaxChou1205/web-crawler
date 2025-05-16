@@ -157,41 +157,47 @@ const fetchHb = async (browser, messages) => {
     }
   });
 
-  const url = `https://www.hbhousing.com.tw/BuyHouse/`;
-  await page.goto(url, {
-    waitUntil: "load",
-    timeout: 0,
-  });
-  await page.waitForSelector(
-    ".container-max-w.relative.z-10.scroll-to-item-wrapper"
-  );
+  // https://www.hbhousing.com.tw/buyhouse/%E5%8F%B0%E5%8C%97%E5%B8%82/116/mansion-style/800-2500-price/2-page
 
-  const result = [];
-  await setSearchCondition(page, "台北市", "文山區");
-  await page.waitForNetworkIdle();
-  result.push(...(await extractData_hb(page)));
-  await nextPage(page);
-  result.push(...(await extractData_hb(page)));
+  const newData = [];
+  const totalPages = 2;
+  const addressEntries = [
+    { zipCode: "116", address: "台北市" },
+    { zipCode: "231", address: "新北市" },
+  ];
 
-  await setSearchCondition(page, "新北市", "新店區");
-  await page.waitForNetworkIdle();
-  result.push(...(await extractData_hb(page)));
-  await nextPage(page);
-  result.push(...(await extractData_hb(page)));
+  for (const addressEntry of addressEntries) {
+    let currentPage = 1;
+    while (currentPage <= totalPages) {
+      const url = `https://www.hbhousing.com.tw/buyhouse/${addressEntry.address}/${addressEntry.zipCode}/mansion-style/800-2500-price/${currentPage}-page`;
+      await page.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout: 0,
+      });
 
-  const difference = result.filter(
-    (item) => !dataSource.some((data) => data.link === item.link)
-  );
+      await page.waitForSelector(
+        ".container-max-w.relative.z-10.scroll-to-item-wrapper"
+      );
+
+      const result = await extractData_hb(page);
+      const difference = result.filter(
+        (item) => !dataSource.some((data) => data.link === item.link)
+      );
+
+      newData.push(...difference);
+      currentPage++;
+    }
+  }
 
   if (!dryRun) {
-    await HouseHbhousing.insertMany(difference);
+    await HouseHbhousing.insertMany(newData);
   }
   page.close();
 
-  if (difference.length === 0) {
+  if (newData.length === 0) {
     console.log("there is no new data in hbhouse");
   } else {
-    messages.push(...difference);
+    messages.push(...newData);
     console.log("new data in hbhouse");
   }
 };
