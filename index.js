@@ -171,8 +171,8 @@ const fetchHb = async (browser, messages) => {
     while (currentPage <= totalPages) {
       const url = `https://www.hbhousing.com.tw/buyhouse/${addressEntry.address}/${addressEntry.zipCode}/mansion-style/800-2500-price/${currentPage}-page`;
       await page.goto(url, {
-        // waitUntil: "domcontentloaded",
-        // timeout: 0,
+        waitUntil: "domcontentloaded",
+        timeout: 0,
       });
 
       // await page.waitForSelector(
@@ -348,7 +348,7 @@ mongoose.connect(db).then(async () => {
 
     await fetchYungChing(browser, messages);
     await fetchSinyi(browser, messages);
-    await fetchHb(browser, messages);
+    // await fetchHb(browser, messages);
     await fetchCt(browser, messages);
 
     // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
