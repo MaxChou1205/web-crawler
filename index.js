@@ -405,14 +405,15 @@ mongoose.connect(db).then(async () => {
   try {
     console.log("running a task every hour");
 
-    await fetchYungChing(browser, messages);
-    await fetchSinyi(browser, messages);
-    // await fetchHb(browser, messages);
-    await fetchCt(browser, messages);
+    await Promise.allSettled([
+      fetchYungChing(browser, messages),
+      fetchSinyi(browser, messages),
+      fetchCt(browser, messages),
+      fetchLand591(browser, messages),
+    ]);
 
-    // 土地
-    await fetchLand591(browser, messages);
-    
+    // await fetchHb(browser, messages);
+
     // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
     // await HouseYungChing.deleteMany({});
     // await HouseYungChing.insertMany(dataSource);
