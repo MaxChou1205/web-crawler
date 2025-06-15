@@ -8,6 +8,7 @@ import {
   nextPage,
 } from "./pageParser_hb.js";
 import { extractData as extractData_ct } from "./pageParser_ct.js";
+import { extractData as extractData_591 } from "./pageParser_land_591.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
 import mongoose from "mongoose";
@@ -16,6 +17,7 @@ import {
   HouseSinyi,
   HouseHbhousing,
   HouseCt,
+  HouseLand591,
 } from "./model/houseData.js";
 
 // yungching
@@ -271,6 +273,63 @@ const fetchCt = async (browser, messages) => {
   }
 };
 
+const fetchLand591 = async (browser, messages) => {
+  const dataSource = await HouseLand591.find({});
+  const page = await browser.newPage();
+  await page.setRequestInterception(true);
+  page.on("request", (request) => {
+    if (
+      ["stylesheet", "font", "script"].indexOf(request.resourceType()) !== -1
+    ) {
+      request.abort();
+    } else if (request.resourceType() === "image") {
+      const url = request.url();
+      if (url.includes("v1/image")) {
+        request.continue();
+      } else {
+        request.abort();
+      }
+    } else {
+      request.continue();
+    }
+  });
+
+  // https://land.591.com.tw/list?type=2&region=24&kind=11&aid=1969&gad_source=1&gad_campaignid=20946223595&gbraid=0AAAAAD-HmYBnbbwyn_eMwBRjR5eRCZJML&gclid=CjwKCAjw3rnCBhBxEiwArN0QE3Vg7BQ0lRCBEtBjqabggkyOe2ZbXY9Si5kFToWj5mO4mz4e7Dpv1hoCg4UQAvD_BwE&page=1&section=283
+  const newData = [];
+  let currentPage = 1;
+  const totalPages = 2;
+
+  while (currentPage <= totalPages) {
+    const url = `https://land.591.com.tw/list?type=2&region=24&kind=11&aid=1969&gad_source=1&gad_campaignid=20946223595&gbraid=0AAAAAD-HmYBnbbwyn_eMwBRjR5eRCZJML&gclid=CjwKCAjw3rnCBhBxEiwArN0QE3Vg7BQ0lRCBEtBjqabggkyOe2ZbXY9Si5kFToWj5mO4mz4e7Dpv1hoCg4UQAvD_BwE&page=${currentPage}&section=283`;
+    await page.goto(url, {
+      waitUntil: "domcontentloaded",
+      timeout: 0,
+    });
+
+    await page.waitForSelector(".list-wrapper");
+
+    const result = await extractData_591(page);
+    const difference = result.filter(
+      (item) => !dataSource.some((data) => data.link === item.link)
+    );
+
+    newData.push(...difference);
+    currentPage++;
+  }
+
+  if (!dryRun) {
+    await HouseLand591.insertMany(newData);
+  }
+  page.close();
+
+  if (newData.length === 0) {
+    console.log("there is no new data in land591");
+  } else {
+    messages.push(...newData);
+    console.log("new data in land591");
+  }
+}
+
 const sendMessage = async (messages) => {
   const MessagingApiClient = line.messagingApi.MessagingApiClient;
   const client = new MessagingApiClient({
@@ -351,6 +410,9 @@ mongoose.connect(db).then(async () => {
     // await fetchHb(browser, messages);
     await fetchCt(browser, messages);
 
+    // 土地
+    await fetchLand591(browser, messages);
+    
     // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
     // await HouseYungChing.deleteMany({});
     // await HouseYungChing.insertMany(dataSource);

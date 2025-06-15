@@ -26,3 +26,4 @@ export const HouseYungChing = mongoose.model("house_yungching", houseSchema);
 export const HouseSinyi = mongoose.model("house_sinyi", houseSchema);
 export const HouseHbhousing = mongoose.model("house_hbhousing", houseSchema);
 export const HouseCt = mongoose.model("house_ct", houseSchema);
+export const HouseLand591 = mongoose.model("house_land_591", houseSchema);
