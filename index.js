@@ -60,7 +60,7 @@ const fetchYungChing = async (browser, messages) => {
         timeout: 0,
       });
 
-      await page.waitForSelector(".buy-list");
+      await page.waitForSelector("[class*='buy-list']");
 
       const pageData = await extractData_yungching(page, baseUrl);
       const difference = pageData.filter(
