@@ -8,8 +8,6 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,8 +21,14 @@ jobs:
           npm install
           node index.js
 
-      # Keep workflow active to prevent being disabled
-      - name: Keepalive Workflow
-        uses: gautamkrishnar/keepalive-workflow@v2
-        with:
-          use_api: true # Use API to keep workflow active without creating commits
+  # 獨立的 keepalive job
+  keepalive:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Keep workflow alive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X PUT repos/${{ github.repository }}/actions/workflows/cron-job.yml/enable
