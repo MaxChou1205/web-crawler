@@ -2,16 +2,18 @@ name: Scheduled Job
 
 on:
   schedule:
-    - cron: '0 * * * *'  # runs the job every hour
-  workflow_dispatch:  # Allows manual triggering
+    - cron: "0 * * * *" # runs the job every hour
+  workflow_dispatch: # Allows manual triggering
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-        
+        uses: actions/checkout@v4
+
       - name: Run script
         env:
           DATABASE: ${{ secrets.DATABASE }}
@@ -20,3 +22,9 @@ jobs:
         run: |
           npm install
           node index.js
+
+      # Keep workflow active to prevent being disabled
+      - name: Keepalive Workflow
+        uses: gautamkrishnar/keepalive-workflow@v2
+        with:
+          use_api: true # Use API to keep workflow active without creating commits

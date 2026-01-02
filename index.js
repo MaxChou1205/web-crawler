@@ -328,7 +328,7 @@ const fetchLand591 = async (browser, messages) => {
     messages.push(...newData);
     console.log("new data in land591");
   }
-}
+};
 
 const sendMessage = async (messages) => {
   const MessagingApiClient = line.messagingApi.MessagingApiClient;
