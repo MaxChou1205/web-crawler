@@ -341,7 +341,7 @@ const sendMessage = async (messages) => {
     const flexMessage = flexTemplate(currentBatch);
     try {
       await client.multicast({
-        to: [process.env.USER_ID],
+        to: process.env.USER_ID.split(','),
         messages: [flexMessage],
       });
     } catch (err) {
