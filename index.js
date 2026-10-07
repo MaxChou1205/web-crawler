@@ -1,11 +1,7 @@
 import "dotenv/config";
 import { fetchList as fetchList_yungching } from "./pageParser_yungching.js";
 import { fetchList as fetchList_sinyi } from "./pageParser_sinyi.js";
-import {
-  setSearchCondition,
-  extractData as extractData_hb,
-  nextPage,
-} from "./pageParser_hb.js";
+import { fetchList as fetchList_hb } from "./pageParser_hb.js";
 import { fetchList as fetchList_ct } from "./pageParser_ct.js";
 import { fetchList as fetchList_591 } from "./pageParser_land_591.js";
 import * as line from "@line/bot-sdk";
@@ -95,20 +91,8 @@ const fetchSinyi = async (messages) => {
 };
 
 // hbhousing
-const fetchHb = async (browser, messages) => {
+const fetchHb = async (messages) => {
   const dataSource = await HouseHbhousing.find({});
-  const page = await browser.newPage();
-  page.setDefaultNavigationTimeout(0);
-  await page.setRequestInterception(true);
-  page.on("request", (request) => {
-    if (
-      ["font", "image", "stylesheet"].indexOf(request.resourceType()) !== -1
-    ) {
-      request.abort();
-    } else {
-      request.continue();
-    }
-  });
 
   // https://www.hbhousing.com.tw/buyhouse/%E5%8F%B0%E5%8C%97%E5%B8%82/116/mansion-style/800-2500-price/2-page
 
@@ -123,18 +107,11 @@ const fetchHb = async (browser, messages) => {
     let currentPage = 1;
     while (currentPage <= totalPages) {
       const url = `https://www.hbhousing.com.tw/buyhouse/${addressEntry.address}/${addressEntry.zipCode}/mansion-style/800-2500-price/${currentPage}-page`;
-      await page.goto(url, {
-        waitUntil: "domcontentloaded",
-        timeout: 0,
-      });
-
-      // await page.waitForSelector(
-      //   ".container-max-w.relative.z-10.scroll-to-item-wrapper"
-      // );
-
-      const result = await extractData_hb(page);
+      const result = await fetchList_hb(url);
       const difference = result.filter(
-        (item) => !dataSource.some((data) => data.link === item.link)
+        (item) =>
+          !dataSource.some((data) => data.link === item.link) &&
+          !newData.some((data) => data.link === item.link)
       );
 
       newData.push(...difference);
@@ -145,7 +122,6 @@ const fetchHb = async (browser, messages) => {
   if (!dryRun) {
     await HouseHbhousing.insertMany(newData);
   }
-  page.close();
 
   if (newData.length === 0) {
     console.log("there is no new data in hbhouse");
@@ -277,13 +253,12 @@ mongoose.connect(db).then(async () => {
       fetchSinyi(messages),
       fetchCt(messages),
       fetchLand591(messages),
+      fetchHb(messages),
     ]);
     results
       .filter((r) => r.status === "rejected")
       .forEach((r) => console.error(r.reason));
 
-    // ponytail: hbhousing still needs a puppeteer browser; launch one here before re-enabling
-    // await fetchHb(browser, messages);
 
     // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
     // await HouseYungChing.deleteMany({});

@@ -21,7 +21,7 @@ Lockfiles for npm (CI uses `npm install`), pnpm (Dockerfile), and bun all exist.
 `index.js` holds the orchestration:
 
 1. Connect Mongo.
-2. Run `fetchYungChing`, `fetchSinyi`, `fetchCt`, `fetchLand591` concurrently with `Promise.allSettled` (a failing site is logged and doesn't abort others). `fetchHb` exists but is commented out — it's the only site still on Puppeteer and needs a browser launched before re-enabling.
+2. Run `fetchYungChing`, `fetchSinyi`, `fetchCt`, `fetchLand591`, `fetchHb` concurrently with `Promise.allSettled` (a failing site is logged and doesn't abort others).
 3. Each `fetchX` follows the same pattern: load all docs from its collection, loop over hard-coded regions × 2 pages with search filters baked into the URL (price 800–2500萬, 新店區/文山區), call the site's `fetchList`, drop items whose `link` is already in the DB or already seen this run, `insertMany` the new ones (unless dry run), and append them to a shared `messages` array.
 4. `finally`: `sendMessage` multicasts `messages` in batches of 12 (Flex carousel limit) via `flexTemplate.js`, then closes Mongo.
 
@@ -32,6 +32,8 @@ Lockfiles for npm (CI uses `npm install`), pnpm (Dockerfile), and bun all exist.
 - **yungching** — regex over Angular-SSR HTML, split on `search-result-list-item`. Its `ng-state` API payload is obfuscated, so don't bother with it.
 - **591** — regex over Nuxt-SSR HTML (`__NUXT__` is a JS function, not JSON).
 - `html.js` — shared `fetchHtml` (sets a browser UA) and regex helpers `one`/`all`/`text`. `all(html, cls, tag)` uses a non-greedy match to the first closing tag, so it's only reliable for elements without nested same-name tags.
-- `pageParser_hb.js` — the old Puppeteer `page.evaluate` style, plus form-driving helpers.
+- **hbhousing** — decodes Nuxt 3's `__NUXT_DATA__` (devalue format: a flat array of index references) and reads `buyHouseListDatas`; the `data` key is a per-request hash. Default sort is already newest first.
+
+There is no headless browser anymore (Puppeteer was removed), so all fetching is plain Node `fetch`.
 
 `model/houseData.js` — one mongoose schema reused for a separate collection per site (`house_yungching`, `house_sinyi`, ...). Deduplication is by `link` string equality, so changing how a site's `link` is built will cause every existing listing to be re-sent as new. ct's `https://buy.cthouse.com.tw//house/<id>.html` double slash is intentional — it matches what the old scraper stored.
