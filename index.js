@@ -1,6 +1,5 @@
 import "dotenv/config";
-import puppeteer from "puppeteer";
-import { extractData as extractData_yungching } from "./pageParser_yungching.js";
+import { fetchList as fetchList_yungching } from "./pageParser_yungching.js";
 import { fetchList as fetchList_sinyi } from "./pageParser_sinyi.js";
 import {
   setSearchCondition,
@@ -8,7 +7,7 @@ import {
   nextPage,
 } from "./pageParser_hb.js";
 import { fetchList as fetchList_ct } from "./pageParser_ct.js";
-import { extractData as extractData_591 } from "./pageParser_land_591.js";
+import { fetchList as fetchList_591 } from "./pageParser_land_591.js";
 import * as line from "@line/bot-sdk";
 import { flexTemplate } from "./flexTemplate.js";
 import mongoose from "mongoose";
@@ -21,26 +20,8 @@ import {
 } from "./model/houseData.js";
 
 // yungching
-const fetchYungChing = async (browser, messages) => {
+const fetchYungChing = async (messages) => {
   const dataSource = await HouseYungChing.find({});
-  const page = await browser.newPage();
-  await page.setRequestInterception(true);
-  page.on("request", (request) => {
-    if (
-      ["stylesheet", "font", "script"].indexOf(request.resourceType()) !== -1
-    ) {
-      request.abort();
-    } else if (request.resourceType() === "image") {
-      const url = request.url();
-      if (url.includes("v1/image")) {
-        request.continue();
-      } else {
-        request.abort();
-      }
-    } else {
-      request.continue();
-    }
-  });
 
   const newData = [];
   const baseUrl = "https://buy.yungching.com.tw/list";
@@ -55,16 +36,11 @@ const fetchYungChing = async (browser, messages) => {
 
     while (currentPage <= totalPages) {
       const url = `${searchUrl}&pg=${currentPage}`;
-      await page.goto(url, {
-        waitUntil: "domcontentloaded",
-        timeout: 0,
-      });
-
-      // await page.waitForSelector("[class*='buy-list']");
-
-      const pageData = await extractData_yungching(page, baseUrl);
+      const pageData = await fetchList_yungching(url);
       const difference = pageData.filter(
-        (item) => !dataSource.some((data) => data.link === item.link)
+        (item) =>
+          !dataSource.some((data) => data.link === item.link) &&
+          !newData.some((data) => data.link === item.link)
       );
 
       newData.push(...difference);
@@ -75,7 +51,6 @@ const fetchYungChing = async (browser, messages) => {
   if (!dryRun) {
     await HouseYungChing.insertMany(newData);
   }
-  page.close();
 
   if (newData.length === 0) {
     console.log("there is no new data in yungching");
@@ -219,44 +194,21 @@ const fetchCt = async (messages) => {
   }
 };
 
-const fetchLand591 = async (browser, messages) => {
+const fetchLand591 = async (messages) => {
   const dataSource = await HouseLand591.find({});
-  const page = await browser.newPage();
-  await page.setRequestInterception(true);
-  page.on("request", (request) => {
-    if (
-      ["stylesheet", "font", "script"].indexOf(request.resourceType()) !== -1
-    ) {
-      request.abort();
-    } else if (request.resourceType() === "image") {
-      const url = request.url();
-      if (url.includes("v1/image")) {
-        request.continue();
-      } else {
-        request.abort();
-      }
-    } else {
-      request.continue();
-    }
-  });
 
-  // https://land.591.com.tw/list?type=2&region=24&kind=11&aid=1969&gad_source=1&gad_campaignid=20946223595&gbraid=0AAAAAD-HmYBnbbwyn_eMwBRjR5eRCZJML&gclid=CjwKCAjw3rnCBhBxEiwArN0QE3Vg7BQ0lRCBEtBjqabggkyOe2ZbXY9Si5kFToWj5mO4mz4e7Dpv1hoCg4UQAvD_BwE&page=1&section=283
+  // https://land.591.com.tw/list?type=2&region=24&kind=11&aid=1969&page=1&section=283
   const newData = [];
   let currentPage = 1;
   const totalPages = 2;
 
   while (currentPage <= totalPages) {
-    const url = `https://land.591.com.tw/list?type=2&region=24&kind=11&aid=1969&gad_source=1&gad_campaignid=20946223595&gbraid=0AAAAAD-HmYBnbbwyn_eMwBRjR5eRCZJML&gclid=CjwKCAjw3rnCBhBxEiwArN0QE3Vg7BQ0lRCBEtBjqabggkyOe2ZbXY9Si5kFToWj5mO4mz4e7Dpv1hoCg4UQAvD_BwE&page=${currentPage}&section=283`;
-    await page.goto(url, {
-      waitUntil: "domcontentloaded",
-      timeout: 0,
-    });
-
-    await page.waitForSelector(".list-wrapper");
-
-    const result = await extractData_591(page);
+    const url = `https://land.591.com.tw/list?type=2&region=24&kind=11&aid=1969&page=${currentPage}&section=283`;
+    const result = await fetchList_591(url);
     const difference = result.filter(
-      (item) => !dataSource.some((data) => data.link === item.link)
+      (item) =>
+        !dataSource.some((data) => data.link === item.link) &&
+        !newData.some((data) => data.link === item.link)
     );
 
     newData.push(...difference);
@@ -266,7 +218,6 @@ const fetchLand591 = async (browser, messages) => {
   if (!dryRun) {
     await HouseLand591.insertMany(newData);
   }
-  page.close();
 
   if (newData.length === 0) {
     console.log("there is no new data in land591");
@@ -317,47 +268,21 @@ const dryRun = Number(process.env.DRY_RUN);
 mongoose.connect(db).then(async () => {
   console.log("db connected");
 
-  const browser = await puppeteer.launch({
-    headless: dryRun ? false : true,
-    timeout: 0,
-    args: [
-      "--disable-setuid-sandbox",
-      "--no-sandbox",
-      "single-process",
-      "--use-gl=egl",
-      "--no-zygote",
-    ],
-    executablePath:
-      process.env.NODE_ENV === "production"
-        ? process.env.PUPPETEER_EXECUTABLE_PATH
-        : puppeteer.executablePath(),
-  });
-
-  browser.on("targetcreated", async (target) => {
-    const newPage = await target.page();
-    if (newPage) {
-      const newPageUrl = newPage.url();
-      if (newPageUrl.includes("https://events.hbhousing.com.tw/")) {
-        await newPage.close();
-      }
-    }
-  });
-
-  browser.userAgent(
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36"
-  );
-
   const messages = [];
   try {
     console.log("running a task every hour");
 
-    await Promise.allSettled([
-      fetchYungChing(browser, messages),
+    const results = await Promise.allSettled([
+      fetchYungChing(messages),
       fetchSinyi(messages),
       fetchCt(messages),
-      fetchLand591(browser, messages),
+      fetchLand591(messages),
     ]);
+    results
+      .filter((r) => r.status === "rejected")
+      .forEach((r) => console.error(r.reason));
 
+    // ponytail: hbhousing still needs a puppeteer browser; launch one here before re-enabling
     // await fetchHb(browser, messages);
 
     // const dataSource = JSON.parse(fs.readFileSync("./data.json"));
@@ -372,7 +297,6 @@ mongoose.connect(db).then(async () => {
   } catch (error) {
     console.error(error);
   } finally {
-    browser.close();
     await sendMessage(messages);
     mongoose.connection.close();
   }

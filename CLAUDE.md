@@ -8,29 +8,30 @@ A one-shot Taiwanese real-estate listing crawler. Each run scrapes new house lis
 
 ## Commands
 
-- `npm run dev` — dry run (`DRY_RUN=1`): opens a visible (non-headless) browser and skips DB inserts. LINE messages are **still sent** if new items are found.
+- `npm run dev` — dry run (`DRY_RUN=1`): skips DB inserts. LINE messages are **still sent** if new items are found; to test end to end without sending, override the token: `DRY_RUN=1 CHANNEL_ACCESS_TOKEN=x USER_ID=x node index.js` (dotenv doesn't override existing env vars; expect 401s at the end).
 - `npm start` / `node index.js` — production run.
 - No tests, linter, or build step.
 
-Env vars (see `.env.example`): `DATABASE` (Mongo URI), `CHANNEL_ACCESS_TOKEN` (LINE Messaging API), `USER_ID` (comma-separated LINE user IDs for multicast), `DRY_RUN`. In Docker, `NODE_ENV=production` makes Puppeteer use `PUPPETEER_EXECUTABLE_PATH` (system chromium).
+Env vars (see `.env.example`): `DATABASE` (Mongo URI), `CHANNEL_ACCESS_TOKEN` (LINE Messaging API), `USER_ID` (comma-separated LINE user IDs for multicast), `DRY_RUN`.
 
 Lockfiles for npm (CI uses `npm install`), pnpm (Dockerfile), and bun all exist.
 
 ## Architecture
 
-`index.js` holds everything except DOM extraction:
+`index.js` holds the orchestration:
 
-1. Connect Mongo → launch one shared Puppeteer browser.
-2. Run `fetchYungChing`, `fetchSinyi`, `fetchCt`, `fetchLand591` concurrently with `Promise.allSettled` (a failing site doesn't abort others). `fetchHb` exists but is commented out.
-3. Each `fetchX` follows the same copy-pasted pattern: load all docs from its collection, open a page with request interception (blocking fonts/images/css/scripts to speed up), loop over hard-coded regions × 2 pages with search filters baked into the URL (price 800–2500萬, 新店區/文山區), call the site's `extractData`, filter out items whose `link` already exists in the DB, `insertMany` the new ones (unless dry run), and append them to a shared `messages` array.
-4. `finally`: close browser, `sendMessage` multicasts `messages` in batches of 12 (Flex carousel limit) via `flexTemplate.js`, close Mongo.
+1. Connect Mongo.
+2. Run `fetchYungChing`, `fetchSinyi`, `fetchCt`, `fetchLand591` concurrently with `Promise.allSettled` (a failing site is logged and doesn't abort others). `fetchHb` exists but is commented out — it's the only site still on Puppeteer and needs a browser launched before re-enabling.
+3. Each `fetchX` follows the same pattern: load all docs from its collection, loop over hard-coded regions × 2 pages with search filters baked into the URL (price 800–2500萬, 新店區/文山區), call the site's `fetchList`, drop items whose `link` is already in the DB or already seen this run, `insertMany` the new ones (unless dry run), and append them to a shared `messages` array.
+4. `finally`: `sendMessage` multicasts `messages` in batches of 12 (Flex carousel limit) via `flexTemplate.js`, then closes Mongo.
 
-`pageParser_<site>.js` — the Puppeteer sites export `extractData(page)` that runs `page.evaluate` with site-specific CSS selectors and returns objects shaped like the shared schema: `{ image, link, title, price, location, description, details[], tags[] }`. `flexTemplate.js` renders `image`, `link`, `title`, `details`, `price` only. `pageParser_hb.js` additionally has `setSearchCondition`/`nextPage` form-driving helpers.
+`pageParser_<site>.js` — each exports `fetchList(...)` returning objects shaped like the shared schema: `{ image, link, title, price, location, description, details[], tags[] }`. `flexTemplate.js` renders only `image`, `link`, `title`, `details`, `price`. No browser is involved:
 
-`model/houseData.js` — one mongoose schema reused for a separate collection per site (`house_yungching`, `house_sinyi`, ...). Deduplication is by `link` string equality, so changing how a site's `link` is built will cause every existing listing to be re-sent as new.
+- **sinyi** — parses `__NEXT_DATA__` JSON (`props.initialReduxState.buyReducer.list`).
+- **ct** — POSTs `{arg, page}` to `/api/house_list.ashx`; `arg` is the listing URL path after `/area/`.
+- **yungching** — regex over Angular-SSR HTML, split on `search-result-list-item`. Its `ng-state` API payload is obfuscated, so don't bother with it.
+- **591** — regex over Nuxt-SSR HTML (`__NUXT__` is a JS function, not JSON).
+- `html.js` — shared `fetchHtml` (sets a browser UA) and regex helpers `one`/`all`/`text`. `all(html, cls, tag)` uses a non-greedy match to the first closing tag, so it's only reliable for elements without nested same-name tags.
+- `pageParser_hb.js` — the old Puppeteer `page.evaluate` style, plus form-driving helpers.
 
-## Gotchas
-
-- sinyi and ct don't use the browser: their parsers export `fetchList` instead of `extractData`. sinyi parses the `__NEXT_DATA__` JSON (`props.initialReduxState.buyReducer.list`); ct POSTs `{arg, page}` to `/api/house_list.ashx`, where `arg` is the listing URL path after `/area/`.
-- Their `link` values reproduce what the old DOM scrapers stored (ct's `https://buy.cthouse.com.tw//house/<id>.html` double slash is intentional) — keep them byte-identical or dedupe breaks.
-- Puppeteer sites break when selectors change; 591 server-renders `__NUXT__`, so it may be convertible the same way.
+`model/houseData.js` — one mongoose schema reused for a separate collection per site (`house_yungching`, `house_sinyi`, ...). Deduplication is by `link` string equality, so changing how a site's `link` is built will cause every existing listing to be re-sent as new. ct's `https://buy.cthouse.com.tw//house/<id>.html` double slash is intentional — it matches what the old scraper stored.

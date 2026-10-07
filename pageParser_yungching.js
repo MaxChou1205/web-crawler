@@ -1,21 +1,23 @@
-export async function extractData(page) {
-  return await page.evaluate(() => {
-    const items = Array.from(document.querySelectorAll(".buy-list .buy-item"));
-    return items.map((item) => ({
-      image: item.querySelector(".img-wrapper img")?.src?.startsWith("https")
-        ? item.querySelector(".img-wrapper img")?.src
-        : null,
-      link: item.querySelector(".link")?.href,
-      title: item.querySelector(".caseName")?.innerText,
-      location: item.querySelector(".address-wrapper .address")?.innerText,
-      description: item.querySelector(".note")?.innerText,
-      details: Array.from(item.querySelectorAll(".case-info span")).map(
-        (span) => span.innerText
-      ),
-      tags: Array.from(item.querySelectorAll(".tag-list .tag-item")).map(
-        (tag) => tag.innerText
-      ),
-      price: item.querySelector(".price-wrapper .price")?.innerText,
-    }));
+import { fetchHtml, text, one, all } from "./html.js";
+
+// ponytail: listing cards are server-rendered (Angular SSR), no browser needed;
+// the ng-state API payload is obfuscated, so parse the HTML instead
+export async function fetchList(url) {
+  const html = await fetchHtml(url);
+  const cards = html.split('class="search-result-list-item"').slice(1);
+
+  return cards.map((card) => {
+    const src = card.match(/<img\b[^>]*\ssrc="([^"]*)"/)?.[1]?.replace(/&amp;/g, "&");
+    const caseInfo = one(card, "case-info", "div") ?? "";
+    return {
+      image: src?.startsWith("https://") ? src : null,
+      link: `https://buy.yungching.com.tw/${card.match(/class="link" href="\/?([^"]*)"/)[1]}`,
+      title: text(one(card, "caseName", "div")),
+      location: text(one(card, "address", "span")),
+      description: text(one(card, "note", "div")),
+      details: [...caseInfo.matchAll(/<span[^>]*>(.*?)<\/span>/gs)].map((m) => text(m[1])),
+      tags: all(card, "tag-item", "li").map(text),
+      price: text(one(card, "price", "div")),
+    };
   });
 }

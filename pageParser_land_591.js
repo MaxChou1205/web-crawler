@@ -1,52 +1,26 @@
-export async function extractData(page) {
-  return await page.evaluate(() => {
-    const items = Array.from(document.querySelectorAll(".list-wrapper .item"));
-    return items.map((item) => {
-      // 獲取圖片 URL (使用 data-src 而非 src，因為圖片是懶加載的)
-      const imageElements = Array.from(
-        item.querySelectorAll(".image-list li img")
-      );
-      const images = Array.from(imageElements).map(
-        (img) => img.getAttribute("data-src") || img.getAttribute("src")
-      );
+import { fetchHtml, text, one, all } from "./html.js";
 
-      // 獲取連結
-      const link = item.querySelector(".item-info-title-content a")?.href || "";
+// ponytail: listing cards are server-rendered (Nuxt SSR), no browser needed
+export async function fetchList(url) {
+  const html = await fetchHtml(url);
+  const list = html.slice(html.indexOf('class="list-wrapper'));
+  const items = list.split(/<div[^>]*class="item"/).slice(1);
 
-      // 獲取標題
-      const title =
-        item.querySelector(".item-info-title-content a")?.textContent.trim() ||
-        "";
-
-      // 獲取價格
-      const priceElement = item.querySelector(".item-info-price>div");
-      const price = priceElement
-        ? priceElement.textContent.trim().replace(/萬/g, "")
-        : "";
-
-      const details = Array.from(
-        item.querySelectorAll(".item-info .item-info-txt:nth-child(1) span")
-      ).map((span) => span.textContent.trim());
-
-      const address =
-        item
-          .querySelector(".item-info .item-info-txt:nth-child(2)")
-          ?.textContent.trim() || "";
-
-      const tags = Array.from(item.querySelectorAll(".item-info-tag .tag")).map(
-        (tag) => tag.textContent.trim()
-      );
-
-      return {
-        images,
-        link,
-        title,
-        price,
-        location: address,
-        description: "",
-        details,
-        tags,
-      };
-    });
+  return items.map((item) => {
+    const images = [...item.matchAll(/<img\b[^>]*data-src="([^"]*)"/g)].map((m) => m[1]);
+    const a = item.match(/class="link[^"]*" href="([^"]*)"[^>]*>(.*?)<\/a>/s);
+    // first item-info-txt: area / land type / zoning / road width; second: address
+    const [info = "", address = ""] = all(item, "item-info-txt", "div");
+    return {
+      image: images[0] ?? null,
+      link: a?.[1] ?? "",
+      title: text(a?.[2]),
+      // non-greedy match stops at the inner </div>, which is right after the total price
+      price: text(one(item, "item-info-price", "div")).replace(/萬/g, ""),
+      location: text(address),
+      description: "",
+      details: [...info.matchAll(/<span[^>]*>(.*?)<\/span>/gs)].map((m) => text(m[1])),
+      tags: all(item, "tag", "span").map(text),
+    };
   });
 }
