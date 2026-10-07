@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const houseSchema = new mongoose.Schema({
   image: String,
-  link: String,
+  link: { type: String, required: true, unique: true }, // dedupe key
   title: String,
   price: String,
   location: String,

@@ -21,8 +21,8 @@ Lockfiles for npm (CI uses `npm install`), pnpm (Dockerfile), and bun all exist.
 `index.js` holds the orchestration:
 
 1. Connect Mongo.
-2. Run `fetchYungChing`, `fetchSinyi`, `fetchCt`, `fetchLand591`, `fetchHb` concurrently with `Promise.allSettled` (a failing site is logged and doesn't abort others).
-3. Each `fetchX` follows the same pattern: load all docs from its collection, loop over hard-coded regions × 2 pages with search filters baked into the URL (price 800–2500萬, 新店區/文山區), call the site's `fetchList`, drop items whose `link` is already in the DB or already seen this run, `insertMany` the new ones (unless dry run), and append them to a shared `messages` array.
+2. `Model.init()` ensures the unique `link` indexes exist, then every entry in the `sites` table is crawled concurrently with `Promise.allSettled` (a failing site is logged and doesn't abort others).
+3. Each `fetchX` only fetches: it loops over hard-coded regions × `pages` with search filters baked into the URL (price 800–2500萬, 新店區/文山區) and returns all items. `saveNew(Model, items)` does the dedupe in MongoDB — a `bulkWrite` of `updateOne` upserts with `$setOnInsert`, so existing listings are never modified and `upsertedIds` identifies the new ones. In dry run it only reads (`distinct` with `$in`). New items go into a shared `messages` array. To add a site: write a `fetchX`, add a model, add a row to `sites`.
 4. `finally`: `sendMessage` multicasts `messages` in batches of 12 (Flex carousel limit) via `flexTemplate.js`, then closes Mongo.
 
 `pageParser_<site>.js` — each exports `fetchList(...)` returning objects shaped like the shared schema: `{ image, link, title, price, location, description, details[], tags[] }`. `flexTemplate.js` renders only `image`, `link`, `title`, `details`, `price`. No browser is involved:
@@ -36,4 +36,4 @@ Lockfiles for npm (CI uses `npm install`), pnpm (Dockerfile), and bun all exist.
 
 There is no headless browser anymore (Puppeteer was removed), so all fetching is plain Node `fetch`.
 
-`model/houseData.js` — one mongoose schema reused for a separate collection per site (`house_yungching`, `house_sinyi`, ...). Deduplication is by `link` string equality, so changing how a site's `link` is built will cause every existing listing to be re-sent as new. ct's `https://buy.cthouse.com.tw//house/<id>.html` double slash is intentional — it matches what the old scraper stored.
+`model/houseData.js` — one mongoose schema reused for a separate collection per site (`house_yungching`, `house_sinyi`, ...). `link` has a unique index and is the dedupe key (exact string equality), so changing how a site's `link` is built will cause every existing listing to be re-sent as new. ct's `https://buy.cthouse.com.tw//house/<id>.html` double slash is intentional — it matches what the old scraper stored.
