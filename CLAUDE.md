@@ -25,12 +25,12 @@ Lockfiles for npm (CI uses `npm install`), pnpm (Dockerfile), and bun all exist.
 3. Each `fetchX` follows the same copy-pasted pattern: load all docs from its collection, open a page with request interception (blocking fonts/images/css/scripts to speed up), loop over hard-coded regions × 2 pages with search filters baked into the URL (price 800–2500萬, 新店區/文山區), call the site's `extractData`, filter out items whose `link` already exists in the DB, `insertMany` the new ones (unless dry run), and append them to a shared `messages` array.
 4. `finally`: close browser, `sendMessage` multicasts `messages` in batches of 12 (Flex carousel limit) via `flexTemplate.js`, close Mongo.
 
-`pageParser_<site>.js` — each exports `extractData(page)` that runs `page.evaluate` with site-specific CSS selectors and returns objects shaped like the shared schema: `{ image, link, title, price, location, description, details[], tags[] }`. `flexTemplate.js` renders `image`, `link`, `title`, `details`, `price` only. `pageParser_hb.js` additionally has `setSearchCondition`/`nextPage` form-driving helpers.
+`pageParser_<site>.js` — the Puppeteer sites export `extractData(page)` that runs `page.evaluate` with site-specific CSS selectors and returns objects shaped like the shared schema: `{ image, link, title, price, location, description, details[], tags[] }`. `flexTemplate.js` renders `image`, `link`, `title`, `details`, `price` only. `pageParser_hb.js` additionally has `setSearchCondition`/`nextPage` form-driving helpers.
 
 `model/houseData.js` — one mongoose schema reused for a separate collection per site (`house_yungching`, `house_sinyi`, ...). Deduplication is by `link` string equality, so changing how a site's `link` is built will cause every existing listing to be re-sent as new.
 
 ## Gotchas
 
-- Selectors break when sites redesign; sinyi uses hashed CSS-module class names matched via `[class*='...']`.
-- ct waits for its `/api/house_list.ashx` XHR (with `retry`) before extracting.
-- Some sites (sinyi via `__NEXT_DATA__`, 591 via `__NUXT__`) server-render their listing data, so plain `fetch` + JSON parsing is a possible replacement for Puppeteer there.
+- sinyi and ct don't use the browser: their parsers export `fetchList` instead of `extractData`. sinyi parses the `__NEXT_DATA__` JSON (`props.initialReduxState.buyReducer.list`); ct POSTs `{arg, page}` to `/api/house_list.ashx`, where `arg` is the listing URL path after `/area/`.
+- Their `link` values reproduce what the old DOM scrapers stored (ct's `https://buy.cthouse.com.tw//house/<id>.html` double slash is intentional) — keep them byte-identical or dedupe breaks.
+- Puppeteer sites break when selectors change; 591 server-renders `__NUXT__`, so it may be convertible the same way.

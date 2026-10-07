@@ -1,49 +1,33 @@
-export async function extractData(page) {
-  return await page.evaluate(() => {
-    const items = Array.from(
-      document.querySelectorAll("[id^='buyHouseCard_']")
-    );
-    return items.map((item) => {
-      let cardElement = item.querySelector(
-        "[class*='longInfoCard_LongInfoCard_TypeWeb']"
-      );
-      return {
-        image: item.querySelector("[class*='longInfoCard_largeImg'] img").src,
-        link: item.querySelector("a").href,
-        title: cardElement
-          .querySelector("[class*='longInfoCard_LongInfoCard_Type_Name']")
-          .textContent.trim(),
-        price: cardElement
-          .querySelector("[class*='LongInfoCard_Type_Right'] span:first-child")
-          .textContent.trim(),
-        location: cardElement
-          .querySelector(
-            "[class*='longInfoCard_LongInfoCard_Type_Address'] span:first-child"
-          )
-          .textContent.trim(),
-        description:
-          cardElement
-            .querySelector(
-              "[class*='longInfoCard_LongInfoCard_Type_Address'] span:nth-child(2)"
-            )
-            .textContent.trim() +
-          "|" +
-          cardElement
-            .querySelector(
-              "[class*='longInfoCard_LongInfoCard_Type_Address'] span:nth-child(3)"
-            )
-            .textContent.trim(),
-        details: Array.from(
-          cardElement.querySelectorAll(
-            "[class*='longInfoCard_LongInfoCard_Type_HouseInfo'] span"
-          )
-        ).map((item) => item.textContent.trim()),
-        tags: Array.from(
-          cardElement.querySelectorAll(
-            "[class*='longInfoCard_LongInfoCard_Type_SpecificTags'] .specificTag"
-          )
-        ).map((item) => item.textContent.trim()),
-      };
-    });
+// ponytail: listing data is server-rendered in __NEXT_DATA__, no browser needed
+export async function fetchList(url) {
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+    },
   });
+  if (!res.ok) throw new Error(`sinyi ${res.status} ${url}`);
+  const html = await res.text();
+  const json = html.match(
+    /<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/s
+  )?.[1];
+  if (!json) throw new Error(`sinyi __NEXT_DATA__ not found ${url}`);
+  const list = JSON.parse(json).props.initialReduxState.buyReducer.list;
+
+  return list.map((item) => ({
+    image: item.image?.[0] ?? null,
+    // keep the old link format so DB dedupe still matches existing rows
+    link: `https://www.sinyi.com.tw/buy/house/${item.houseNo}?breadcrumb=list`,
+    title: item.name,
+    price: item.totalPrice.toLocaleString("en-US"),
+    location: item.address,
+    description: item.age,
+    details: [
+      `建坪 ${item.areaBuilding}`,
+      `主 + 陽${item.pingUsed}`,
+      item.layout,
+      `${item.floor}樓/${item.totalfloor}樓`,
+    ],
+    tags: [], // ponytail: tags are numeric ids, never displayed
+  }));
 }
