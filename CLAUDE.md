@@ -29,7 +29,7 @@ Lockfiles for npm (CI uses `npm install`), pnpm (Dockerfile), and bun all exist.
 
 - **sinyi** — parses `__NEXT_DATA__` JSON (`props.initialReduxState.buyReducer.list`).
 - **ct** — POSTs `{arg, page}` to `/api/house_list.ashx`; `arg` is the listing URL path after `/area/`.
-- **yungching** — regex over Angular-SSR HTML, split on `search-result-list-item`. Its `ng-state` API payload is obfuscated, so don't bother with it.
+- **yungching** — regex over Angular-SSR HTML, split on `search-result-list-item`. Its `ng-state` API payload is obfuscated, so don't bother with it. Currently disabled (commented out in `sites`): its CloudFront WAF returns 403 to GitHub Actions (cloud) IPs. Re-enabling in CI needs a self-hosted runner or a residential proxy.
 - **591** — regex over Nuxt-SSR HTML (`__NUXT__` is a JS function, not JSON).
 - `html.js` — shared `fetchHtml` (sets a browser UA) and regex helpers `one`/`all`/`text`. `all(html, cls, tag)` uses a non-greedy match to the first closing tag, so it's only reliable for elements without nested same-name tags.
 - **hbhousing** — decodes Nuxt 3's `__NUXT_DATA__` (devalue format: a flat array of index references) and reads `buyHouseListDatas`; the `data` key is a per-request hash. Default sort is already newest first.

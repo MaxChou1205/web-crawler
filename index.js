@@ -23,7 +23,7 @@ const fetchYungChing = async () => {
   for (const region of ["新北市-新店區_c", "台北市-文山區_c"]) {
     for (const page of pages) {
       const url = `https://buy.yungching.com.tw/list/region/住宅_p/${encodeURIComponent(
-        region
+        region,
       )}/800-2500_price/?od=80&pg=${page}`;
       items.push(...(await fetchList_yungching(url)));
     }
@@ -91,7 +91,7 @@ const saveNew = async (Model, items) => {
 
   if (dryRun) {
     const existing = new Set(
-      await Model.distinct("link", { link: { $in: unique.map((i) => i.link) } })
+      await Model.distinct("link", { link: { $in: unique.map((i) => i.link) } }),
     );
     return unique.filter((item) => !existing.has(item.link));
   }
@@ -105,13 +105,13 @@ const saveNew = async (Model, items) => {
         upsert: true,
       },
     })),
-    { ordered: false }
+    { ordered: false },
   );
   return Object.keys(result.upsertedIds).map((index) => unique[index]);
 };
 
 const sites = [
-  ["yungching", HouseYungChing, fetchYungChing],
+  // ["yungching", HouseYungChing, fetchYungChing],
   ["sinyi", HouseSinyi, fetchSinyi],
   ["ct", HouseCt, fetchCt],
   ["land591", HouseLand591, fetchLand591],
@@ -139,7 +139,7 @@ const sendMessage = async (messages) => {
     const flexMessage = flexTemplate(currentBatch);
     try {
       await client.multicast({
-        to: process.env.USER_ID.split(','),
+        to: process.env.USER_ID.split(","),
         messages: [flexMessage],
       });
     } catch (err) {
@@ -176,12 +176,8 @@ mongoose.connect(db).then(async () => {
     // make sure the unique link indexes exist before relying on them
     await Promise.all(sites.map(([, Model]) => Model.init()));
 
-    const results = await Promise.allSettled(
-      sites.map((site) => crawl(site, messages))
-    );
-    results
-      .filter((r) => r.status === "rejected")
-      .forEach((r) => console.error(r.reason));
+    const results = await Promise.allSettled(sites.map((site) => crawl(site, messages)));
+    results.filter((r) => r.status === "rejected").forEach((r) => console.error(r.reason));
 
     console.log("task done");
   } catch (error) {
